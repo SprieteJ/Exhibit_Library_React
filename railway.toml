@@ -1,0 +1,9 @@
+[build]
+builder = "nixpacks"
+
+[build.nixpacks]
+aptPkgs = ["nodejs", "npm"]
+buildCmd = "cd Dashboard/frontend && npm install && npm run build"
+
+[deploy]
+startCommand = "cd Dashboard && python3 app.py"
