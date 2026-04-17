@@ -1,0 +1,140 @@
+"""
+api/assets.py — asset list + DB status endpoints
+"""
+from datetime import datetime, timezone
+from api.shared import get_conn, MAJORS, MACRO_TICKERS
+import psycopg2.extras
+
+
+def handle_assets(params):
+    tab  = params.get("tab", ["individual"])[0]
+    conn = get_conn()
+    cur  = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+
+    if tab in ("majors", "bitcoin"):
+        cur.execute("""
+            SELECT DISTINCT p.symbol, r.coingecko_name as name
+            FROM price_daily p
+            LEFT JOIN asset_registry r ON p.coingecko_id = r.coingecko_id
+            WHERE p.symbol = ANY(%s) ORDER BY p.symbol
+        """, (MAJORS,))
+    elif tab == "altcoins":
+        cur.execute("""
+            SELECT DISTINCT p.symbol, r.coingecko_name as name
+            FROM price_daily p
+            LEFT JOIN asset_registry r ON p.coingecko_id = r.coingecko_id
+            WHERE p.symbol != ALL(%s) ORDER BY p.symbol
+        """, (MAJORS,))
+    elif tab == "macro":
+        cur.execute("""
+            SELECT DISTINCT ticker as symbol, name FROM macro_daily
+            WHERE ticker = ANY(%s) ORDER BY ticker
+        """, (MACRO_TICKERS,))
+    else:
+        cur.execute("""
+            SELECT DISTINCT p.symbol, r.coingecko_name as name
+            FROM price_daily p
+            LEFT JOIN asset_registry r ON p.coingecko_id = r.coingecko_id
+            ORDER BY p.symbol
+        """)
+
+    rows = cur.fetchall()
+    conn.close()
+    return [dict(r) for r in rows]
+
+
+def handle_db_status():
+    TABLES = [
+        {"key": "price_daily",              "label": "Price (daily)",             "granularity": "Daily",    "source": "CoinGecko",     "category": "market_data", "asset_col": "coingecko_id", "ts_col": "timestamp"},
+        {"key": "price_hourly",             "label": "Price (hourly)",            "granularity": "Hourly",   "source": "CoinGecko",     "category": "market_data", "asset_col": "coingecko_id", "ts_col": "timestamp"},
+        {"key": "marketcap_daily",          "label": "Market cap",                "granularity": "Daily",    "source": "CoinGecko",     "category": "market_data", "asset_col": "coingecko_id", "ts_col": "timestamp"},
+        {"key": "volume_daily",             "label": "Volume",                    "granularity": "Daily",    "source": "CoinGecko",     "category": "market_data", "asset_col": "coingecko_id", "ts_col": "timestamp"},
+        {"key": "total_marketcap_daily",    "label": "Total crypto mcap",         "granularity": "Daily",    "source": "CoinGecko",     "category": "market_data", "asset_col": "source",       "ts_col": "timestamp"},
+        {"key": "alt_intracorr_daily",      "label": "Alt intracorrelation",      "granularity": "Daily",    "source": "Computed",      "category": "market_data", "asset_col": "tier",         "ts_col": "timestamp"},
+        {"key": "funding_8h",               "label": "Funding rate",              "granularity": "8h",       "source": "Binance/Bybit", "category": "perps",       "asset_col": "coingecko_id", "ts_col": "timestamp"},
+        {"key": "open_interest_daily",      "label": "Open interest (daily)",     "granularity": "Daily",    "source": "Binance/Bybit", "category": "perps",       "asset_col": "coingecko_id", "ts_col": "timestamp"},
+        {"key": "open_interest_hourly",     "label": "Open interest (hourly)",    "granularity": "Hourly",   "source": "Binance/Bybit", "category": "perps",       "asset_col": "coingecko_id", "ts_col": "timestamp"},
+        {"key": "long_short_ratio",         "label": "Long/short ratio",          "granularity": "Daily/1h", "source": "Binance/Bybit", "category": "perps",       "asset_col": "coingecko_id", "ts_col": "timestamp"},
+        {"key": "dvol_daily",               "label": "DVOL (implied vol)",        "granularity": "Daily",    "source": "Deribit",       "category": "derivatives", "asset_col": "currency",     "ts_col": "timestamp"},
+        {"key": "options_daily",            "label": "Options snapshot (BTC/ETH)","granularity": "Daily",    "source": "Deribit",       "category": "derivatives", "asset_col": "currency",     "ts_col": "timestamp"},
+        {"key": "options_instruments_daily","label": "Options instruments",       "granularity": "Daily",    "source": "Deribit",       "category": "derivatives", "asset_col": "currency",     "ts_col": "timestamp"},
+        {"key": "etf_aum_daily",            "label": "ETF AUM",                   "granularity": "Daily",    "source": "yfinance",      "category": "etf",         "asset_col": "ticker",       "ts_col": "timestamp"},
+        {"key": "etf_flows_daily",          "label": "ETF flows",                 "granularity": "Daily",    "source": "Farside",       "category": "etf",         "asset_col": "ticker",       "ts_col": "timestamp"},
+        {"key": "macro_daily",              "label": "Macro assets (daily)",      "granularity": "Daily",    "source": "yfinance",      "category": "macro",       "asset_col": "ticker",       "ts_col": "timestamp"},
+        {"key": "macro_hourly",             "label": "Macro assets (hourly)",     "granularity": "Hourly",   "source": "yfinance",      "category": "macro",       "asset_col": "ticker",       "ts_col": "timestamp"},
+        {"key": "onchain_daily",            "label": "On-chain (BTC)",            "granularity": "Daily",    "source": "CoinMetrics",   "category": "misc",        "asset_col": "asset",        "ts_col": "timestamp"},
+        {"key": "asset_registry",           "label": "Asset classification",      "granularity": "Static",   "source": "Internal",      "category": "misc",        "asset_col": "symbol",       "ts_col": None},
+    ]
+
+    conn = get_conn()
+    cur  = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+    now  = datetime.now(timezone.utc)
+    result = []
+
+    for t in TABLES:
+        try:
+            if t["ts_col"]:
+                cur.execute(f"""
+                    SELECT COUNT(*) as rows,
+                           COUNT(DISTINCT {t["asset_col"]}) as assets,
+                           MIN({t["ts_col"]})::date as date_from,
+                           MAX({t["ts_col"]})::date as date_to,
+                           MAX(ingested_at) as last_updated
+                    FROM {t["key"]}
+                """)
+            else:
+                cur.execute(f"""
+                    SELECT COUNT(*) as rows,
+                           COUNT(DISTINCT {t["asset_col"]}) as assets,
+                           NULL as date_from, NULL as date_to, NULL as last_updated
+                    FROM {t["key"]}
+                """)
+            row = cur.fetchone()
+            lu  = row["last_updated"]
+            if lu is None:
+                status = "manual"
+            else:
+                if lu.tzinfo is None: lu = lu.replace(tzinfo=timezone.utc)
+                status = "live" if (now - lu).total_seconds() / 3600 <= 48 else "stale"
+                lu = lu.strftime("%Y-%m-%d %H:%M")
+
+            result.append({
+                "name":         t["label"],
+                "label":        t["label"],
+                "granularity":  t["granularity"],
+                "source":       t["source"],
+                "category":     t["category"],
+                "rows":         int(row["rows"]),
+                "assets":       int(row["assets"]),
+                "date_from":    str(row["date_from"]) if row["date_from"] else "—",
+                "date_to":      str(row["date_to"])   if row["date_to"]   else "—",
+                "last_updated": lu if lu else "—",
+                "status":       status,
+            })
+        except Exception as e:
+            result.append({
+                "name": t["label"], "label": t["label"], "granularity": t["granularity"],
+                "source": t["source"], "category": t.get("category", "misc"),
+                "rows": 0, "assets": 0, "date_from": "—", "date_to": "—",
+                "last_updated": "—", "status": "error", "error": str(e),
+            })
+
+    conn.close()
+    return {
+        "datasets": result,
+        "updated": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC"),
+    }
+
+
+def handle_latest_date():
+    """Return the latest date available in price_daily."""
+    try:
+        conn = get_conn()
+        cur  = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        cur.execute("SELECT MAX(timestamp::date) as latest FROM price_daily WHERE price_usd > 0")
+        row = cur.fetchone()
+        conn.close()
+        latest = str(row["latest"]) if row and row["latest"] else None
+        return {"latest": latest}
+    except Exception as e:
+        return {"latest": None, "error": str(e)}
