@@ -4,14 +4,91 @@ import Sidebar from './components/Sidebar';
 import RightPanel from './components/RightPanel';
 import Placeholder from './components/Placeholder';
 
-const MacroSharpe = lazy(() => import('./charts/macro/MacroSharpe'));
+// ── Macro ────────────────────────────────────────────────────────────────────
+const MacroPrice      = lazy(() => import('./charts/macro/MacroPrice'));
+const MacroSharpe     = lazy(() => import('./charts/macro/MacroSharpe'));
+const MacroBtcCorr    = lazy(() => import('./charts/macro/MacroBtcCorr'));
+const MacroMatrix     = lazy(() => import('./charts/macro/MacroMatrix'));
+const MacroDxyBtc     = lazy(() => import('./charts/macro/MacroDxyBtc'));
+const MacroIgvBtc     = lazy(() => import('./charts/macro/MacroIgvBtc'));
+const MacroRisk       = lazy(() => import('./charts/macro/MacroRisk'));
+const MacroRealYields = lazy(() => import('./charts/macro/MacroRealYields'));
+const MacroStablecoin = lazy(() => import('./charts/macro/MacroStablecoin'));
+
+// ── Bitcoin ──────────────────────────────────────────────────────────────────
+const BtcMa           = lazy(() => import('./charts/bitcoin/BtcMa'));
+const BtcMaGap        = lazy(() => import('./charts/bitcoin/BtcMaGap'));
+const Btc200wFloor    = lazy(() => import('./charts/bitcoin/Btc200wFloor'));
+const Btc200dDev      = lazy(() => import('./charts/bitcoin/Btc200dDev'));
+const BtcPiCycle      = lazy(() => import('./charts/bitcoin/BtcPiCycle'));
+const BtcRealvol      = lazy(() => import('./charts/bitcoin/BtcRealvol'));
+const BtcRvIv         = lazy(() => import('./charts/bitcoin/BtcRvIv'));
+const BtcDrawdown     = lazy(() => import('./charts/bitcoin/BtcDrawdown'));
+const BtcMcap         = lazy(() => import('./charts/bitcoin/BtcMcap'));
+const BtcDominance    = lazy(() => import('./charts/bitcoin/BtcDominance'));
+const BtcFunding      = lazy(() => import('./charts/bitcoin/BtcFunding'));
+const BtcOi           = lazy(() => import('./charts/bitcoin/BtcOi'));
+const BtcFundingDelta = lazy(() => import('./charts/bitcoin/BtcFundingDelta'));
+const BtcEpochs       = lazy(() => import('./charts/bitcoin/BtcEpochs'));
+const BtcCycles       = lazy(() => import('./charts/bitcoin/BtcCycles'));
+const BtcBull         = lazy(() => import('./charts/bitcoin/BtcBull'));
+const BtcGold         = lazy(() => import('./charts/bitcoin/BtcGold'));
+const BtcGoldRatio    = lazy(() => import('./charts/bitcoin/BtcGoldRatio'));
+
+// ── Ethereum ─────────────────────────────────────────────────────────────────
+const EthMa           = lazy(() => import('./charts/ethereum/EthMa'));
+const EthMaGap        = lazy(() => import('./charts/ethereum/EthMaGap'));
+const Eth200dDev      = lazy(() => import('./charts/ethereum/Eth200dDev'));
+const EthDrawdown     = lazy(() => import('./charts/ethereum/EthDrawdown'));
+const EthMcap         = lazy(() => import('./charts/ethereum/EthMcap'));
+const EthBtcRatio     = lazy(() => import('./charts/ethereum/EthBtcRatio'));
 
 const CHART_COMPONENTS = {
-  'mac-sharpe': MacroSharpe,
+  // Macro
+  'mac-price':       MacroPrice,
+  'mac-sharpe':      MacroSharpe,
+  'mac-btc-corr':    MacroBtcCorr,
+  'mac-matrix':      MacroMatrix,
+  'mac-dxy-btc':     MacroDxyBtc,
+  'mac-igv-btc':     MacroIgvBtc,
+  'mac-risk':        MacroRisk,
+  'mac-real-yields':  MacroRealYields,
+  'mac-stablecoin':  MacroStablecoin,
+  // Bitcoin
+  'btc-ma':          BtcMa,
+  'btc-ma-gap':      BtcMaGap,
+  'btc-200w-floor':  Btc200wFloor,
+  'btc-200d-dev':    Btc200dDev,
+  'btc-pi-cycle':    BtcPiCycle,
+  'btc-realvol':     BtcRealvol,
+  'btc-rv-iv':       BtcRvIv,
+  'btc-drawdown':    BtcDrawdown,
+  'btc-mcap':        BtcMcap,
+  'btc-dominance':   BtcDominance,
+  'btc-funding':     BtcFunding,
+  'btc-oi':          BtcOi,
+  'btc-funding-delta': BtcFundingDelta,
+  'btc-epochs':      BtcEpochs,
+  'btc-cycles':      BtcCycles,
+  'btc-bull':        BtcBull,
+  'btc-gold':        BtcGold,
+  'btc-gold-ratio':  BtcGoldRatio,
+  // Ethereum
+  'eth-ma':          EthMa,
+  'eth-ma-gap':      EthMaGap,
+  'eth-200d-dev':    Eth200dDev,
+  'eth-drawdown':    EthDrawdown,
+  'eth-mcap':        EthMcap,
+  'eth-btc-ratio':   EthBtcRatio,
 };
 
+// Charts that use a rolling window parameter
+const WINDOW_CHARTS = new Set([
+  'mac-sharpe', 'mac-btc-corr', 'mac-matrix', 'mac-dxy-btc', 'mac-igv-btc',
+  'btc-funding-delta',
+]);
+
 function todayStr() { return new Date().toISOString().split('T')[0]; }
-function monthsAgoStr(n) { const d = new Date(); d.setMonth(d.getMonth() - n); return d.toISOString().split('T')[0]; }
 
 export default function App() {
   const tabKeys = Object.keys(TABS);
@@ -89,7 +166,7 @@ export default function App() {
           : <Placeholder chartKey={activeChart} />}
       </Suspense>
 
-      <RightPanel from={from} to={to} window={win} activePreset={activePreset} onChange={handleControlChange} showWindow={!!CHART_COMPONENTS[activeChart]} />
+      <RightPanel from={from} to={to} window={win} activePreset={activePreset} onChange={handleControlChange} showWindow={WINDOW_CHARTS.has(activeChart)} />
     </>
   );
 }
