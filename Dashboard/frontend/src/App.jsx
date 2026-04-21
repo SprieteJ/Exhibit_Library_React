@@ -43,49 +43,93 @@ const EthDrawdown     = lazy(() => import('./charts/ethereum/EthDrawdown'));
 const EthMcap         = lazy(() => import('./charts/ethereum/EthMcap'));
 const EthBtcRatio     = lazy(() => import('./charts/ethereum/EthBtcRatio'));
 
+// ── Altcoins ─────────────────────────────────────────────────────────────────
+const AltMcap          = lazy(() => import('./charts/altcoins/AltMcap'));
+const AltMcapGap       = lazy(() => import('./charts/altcoins/AltMcapGap'));
+const AltMcapDev       = lazy(() => import('./charts/altcoins/AltMcapDev'));
+const AltDominance     = lazy(() => import('./charts/altcoins/AltDominance'));
+const AltRelShare      = lazy(() => import('./charts/altcoins/AltRelShare'));
+const AltBtcRatio      = lazy(() => import('./charts/altcoins/AltBtcRatio'));
+const AltScatter       = lazy(() => import('./charts/altcoins/AltScatter'));
+const AltAltseason     = lazy(() => import('./charts/altcoins/AltAltseason'));
+const AltBeta          = lazy(() => import('./charts/altcoins/AltBeta'));
+const AltHeatmap       = lazy(() => import('./charts/altcoins/AltHeatmap'));
+const AltIntracorr     = lazy(() => import('./charts/altcoins/AltIntracorr'));
+const AltAthDrawdown   = lazy(() => import('./charts/altcoins/AltAthDrawdown'));
+const AltDrawdownTs    = lazy(() => import('./charts/altcoins/AltDrawdownTs'));
+const AltFundingHeatmap = lazy(() => import('./charts/altcoins/AltFundingHeatmap'));
+
+// ── Baskets ──────────────────────────────────────────────────────────────────
+const SecEqual      = lazy(() => import('./charts/baskets/SecEqual'));
+const SecMcapW      = lazy(() => import('./charts/baskets/SecMcapW'));
+const McTotal       = lazy(() => import('./charts/baskets/McTotal'));
+const McMedian      = lazy(() => import('./charts/baskets/McMedian'));
+const SecDominance  = lazy(() => import('./charts/baskets/SecDominance'));
+const SecIntra      = lazy(() => import('./charts/baskets/SecIntra'));
+const SecVsBtc      = lazy(() => import('./charts/baskets/SecVsBtc'));
+const SecXheatmap   = lazy(() => import('./charts/baskets/SecXheatmap'));
+const SecMom        = lazy(() => import('./charts/baskets/SecMom'));
+const SecZscore     = lazy(() => import('./charts/baskets/SecZscore'));
+const SecCumulative = lazy(() => import('./charts/baskets/SecCumulative'));
+const SecVol        = lazy(() => import('./charts/baskets/SecVol'));
+const SecDrawdown   = lazy(() => import('./charts/baskets/SecDrawdown'));
+const SecBreadth    = lazy(() => import('./charts/baskets/SecBreadth'));
+const SecFunding    = lazy(() => import('./charts/baskets/SecFunding'));
+const SecOi         = lazy(() => import('./charts/baskets/SecOi'));
+const SecRrg        = lazy(() => import('./charts/baskets/SecRrg'));
+const AnaBubble     = lazy(() => import('./charts/baskets/AnaBubble'));
+const SecSharpe     = lazy(() => import('./charts/baskets/SecSharpe'));
+
+// ── Crypto Market ────────────────────────────────────────────────────────────
+const CmTotalMcap   = lazy(() => import('./charts/crypto_market/CmTotalMcap'));
+
+// ── ETF ──────────────────────────────────────────────────────────────────────
+const EtfNetFlows   = lazy(() => import('./charts/etf/EtfNetFlows'));
+const EtfDailyBar   = lazy(() => import('./charts/etf/EtfDailyBar'));
+const EtfWeeklyBar  = lazy(() => import('./charts/etf/EtfWeeklyBar'));
+const EtfTotalAum   = lazy(() => import('./charts/etf/EtfTotalAum'));
+
 const CHART_COMPONENTS = {
   // Macro
-  'mac-price':       MacroPrice,
-  'mac-sharpe':      MacroSharpe,
-  'mac-btc-corr':    MacroBtcCorr,
-  'mac-matrix':      MacroMatrix,
-  'mac-dxy-btc':     MacroDxyBtc,
-  'mac-igv-btc':     MacroIgvBtc,
-  'mac-risk':        MacroRisk,
-  'mac-real-yields':  MacroRealYields,
-  'mac-stablecoin':  MacroStablecoin,
+  'mac-price': MacroPrice, 'mac-sharpe': MacroSharpe, 'mac-btc-corr': MacroBtcCorr,
+  'mac-matrix': MacroMatrix, 'mac-dxy-btc': MacroDxyBtc, 'mac-igv-btc': MacroIgvBtc,
+  'mac-risk': MacroRisk, 'mac-real-yields': MacroRealYields, 'mac-stablecoin': MacroStablecoin,
   // Bitcoin
-  'btc-ma':          BtcMa,
-  'btc-ma-gap':      BtcMaGap,
-  'btc-200w-floor':  Btc200wFloor,
-  'btc-200d-dev':    Btc200dDev,
-  'btc-pi-cycle':    BtcPiCycle,
-  'btc-realvol':     BtcRealvol,
-  'btc-rv-iv':       BtcRvIv,
-  'btc-drawdown':    BtcDrawdown,
-  'btc-mcap':        BtcMcap,
-  'btc-dominance':   BtcDominance,
-  'btc-funding':     BtcFunding,
-  'btc-oi':          BtcOi,
-  'btc-funding-delta': BtcFundingDelta,
-  'btc-epochs':      BtcEpochs,
-  'btc-cycles':      BtcCycles,
-  'btc-bull':        BtcBull,
-  'btc-gold':        BtcGold,
-  'btc-gold-ratio':  BtcGoldRatio,
+  'btc-ma': BtcMa, 'btc-ma-gap': BtcMaGap, 'btc-200w-floor': Btc200wFloor,
+  'btc-200d-dev': Btc200dDev, 'btc-pi-cycle': BtcPiCycle, 'btc-realvol': BtcRealvol,
+  'btc-rv-iv': BtcRvIv, 'btc-drawdown': BtcDrawdown, 'btc-mcap': BtcMcap,
+  'btc-dominance': BtcDominance, 'btc-funding': BtcFunding, 'btc-oi': BtcOi,
+  'btc-funding-delta': BtcFundingDelta, 'btc-epochs': BtcEpochs, 'btc-cycles': BtcCycles,
+  'btc-bull': BtcBull, 'btc-gold': BtcGold, 'btc-gold-ratio': BtcGoldRatio,
   // Ethereum
-  'eth-ma':          EthMa,
-  'eth-ma-gap':      EthMaGap,
-  'eth-200d-dev':    Eth200dDev,
-  'eth-drawdown':    EthDrawdown,
-  'eth-mcap':        EthMcap,
-  'eth-btc-ratio':   EthBtcRatio,
+  'eth-ma': EthMa, 'eth-ma-gap': EthMaGap, 'eth-200d-dev': Eth200dDev,
+  'eth-drawdown': EthDrawdown, 'eth-mcap': EthMcap, 'eth-btc-ratio': EthBtcRatio,
+  // Altcoins
+  'am-mcap': AltMcap, 'am-mcap-gap': AltMcapGap, 'am-mcap-dev': AltMcapDev,
+  'am-dominance': AltDominance, 'am-rel-share': AltRelShare, 'am-btc-ratio': AltBtcRatio,
+  'alt-scatter': AltScatter, 'alt-altseason': AltAltseason, 'alt-beta': AltBeta,
+  'alt-heatmap': AltHeatmap, 'am-intracorr': AltIntracorr,
+  'alt-ath-drawdown': AltAthDrawdown, 'alt-drawdown-ts': AltDrawdownTs,
+  'alt-funding-heatmap': AltFundingHeatmap,
+  // Baskets
+  'sec-equal': SecEqual, 'sec-mcap': SecMcapW, 'mc-total': McTotal, 'mc-median': McMedian,
+  'sec-dominance': SecDominance, 'sec-intra': SecIntra, 'sec-vs': SecVsBtc,
+  'sec-xheatmap': SecXheatmap, 'sec-mom': SecMom, 'sec-zscore': SecZscore,
+  'sec-cumulative': SecCumulative, 'sec-vol': SecVol, 'sec-drawdown': SecDrawdown,
+  'sec-breadth': SecBreadth, 'sec-funding': SecFunding, 'sec-oi': SecOi,
+  'sec-rrg': SecRrg, 'ana-bubble': AnaBubble, 'sec-sharpe': SecSharpe,
+  // Crypto Market
+  'cm-total-mcap': CmTotalMcap,
+  // ETF
+  'etf-net-flows': EtfNetFlows, 'etf-daily-bar': EtfDailyBar,
+  'etf-weekly-bar': EtfWeeklyBar, 'etf-total-aum': EtfTotalAum,
 };
 
-// Charts that use a rolling window parameter
 const WINDOW_CHARTS = new Set([
   'mac-sharpe', 'mac-btc-corr', 'mac-matrix', 'mac-dxy-btc', 'mac-igv-btc',
-  'btc-funding-delta',
+  'btc-funding-delta', 'alt-altseason', 'alt-beta', 'alt-heatmap',
+  'sec-intra', 'sec-vs', 'sec-mom', 'sec-zscore', 'sec-vol',
+  'sec-xheatmap', 'sec-rrg', 'ana-bubble', 'sec-sharpe', 'etf-net-flows',
 ]);
 
 function todayStr() { return new Date().toISOString().split('T')[0]; }
@@ -93,11 +137,11 @@ function todayStr() { return new Date().toISOString().split('T')[0]; }
 export default function App() {
   const tabKeys = Object.keys(TABS);
   const [darkMode, setDarkMode] = useState(true);
-  const [activeTab, setActiveTab] = useState('macro');
-  const [activeChart, setActiveChart] = useState('mac-sharpe');
+  const [activeTab, setActiveTab] = useState('bitcoin');
+  const [activeChart, setActiveChart] = useState('btc-ma');
   const [from, setFrom] = useState('2013-01-01');
   const [to, setTo] = useState(todayStr());
-  const [win, setWin] = useState('180');
+  const [win, setWin] = useState('30');
   const [activePreset, setActivePreset] = useState('ALL');
 
   const toggleDark = () => {

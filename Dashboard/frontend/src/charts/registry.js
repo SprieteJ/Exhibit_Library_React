@@ -17,11 +17,11 @@ const TABS = {
       { key: 'btc-realvol', label: 'Realized volatility', sub: '30d, 90d, 180d rolling vol.', src: 'CoinGecko Pro' },
       { key: 'btc-rv-iv', label: 'IV vs RV', sub: 'DVOL vs 30d realized vol.', src: 'Deribit + CoinGecko' },
     ]},
-    { label: 'Drawdown', charts: [
+    { label: 'Price Performance', charts: [
       { key: 'btc-drawdown', label: 'Drawdown from ATH', sub: 'Rolling drawdown.', src: 'CoinGecko Pro' },
     ]},
     { label: 'Market Cap', charts: [
-      { key: 'btc-mcap', label: 'Market cap', sub: 'BTC mcap with MAs.', src: 'CoinGecko Pro' },
+      { key: 'btc-mcap', label: 'Market cap', sub: 'BTC mcap with milestones.', src: 'CoinGecko Pro' },
       { key: 'btc-dominance', label: 'Dominance', sub: 'BTC as % of total crypto.', src: 'CoinGecko Pro' },
     ]},
     { label: 'Derivatives', charts: [
@@ -45,9 +45,81 @@ const TABS = {
       { key: 'eth-ma-gap', label: '50d / 200d MA gap', sub: 'MA spread.', src: 'CoinGecko Pro' },
       { key: 'eth-200d-dev', label: '200d MA deviation', sub: 'Deviation from 200d MA.', src: 'CoinGecko Pro' },
     ]},
-    { label: 'Drawdown', charts: [{ key: 'eth-drawdown', label: 'Drawdown from ATH', sub: 'Rolling drawdown.', src: 'CoinGecko Pro' }] },
+    { label: 'Price Performance', charts: [{ key: 'eth-drawdown', label: 'Drawdown from ATH', sub: 'Rolling drawdown.', src: 'CoinGecko Pro' }] },
     { label: 'Market Cap', charts: [{ key: 'eth-mcap', label: 'Market cap', sub: 'ETH mcap.', src: 'CoinGecko Pro' }] },
     { label: 'Relative', charts: [{ key: 'eth-btc-ratio', label: 'ETH / BTC ratio', sub: 'ETH priced in BTC.', src: 'CoinGecko Pro' }] },
+  ]},
+  altcoins: { label: 'Altcoins', groups: [
+    { label: 'Moving Averages', charts: [
+      { key: 'am-mcap', label: 'Altcoin mcap with MAs', sub: 'Total altcoin mcap (ex-BTC, ex-ETH) with 50d and 200d MA.', src: 'CoinGecko Pro' },
+      { key: 'am-mcap-gap', label: '50d and 200d gap', sub: 'Altcoin mcap 50d/200d MA gap.', src: 'CoinGecko Pro' },
+      { key: 'am-mcap-dev', label: '200d MA deviation', sub: '% deviation of alt mcap from its 200d MA.', src: 'CoinGecko Pro' },
+    ]},
+    { label: 'Market Cap', charts: [
+      { key: 'am-dominance', label: 'Dominance shares', sub: 'BTC, ETH, and altcoin share of total crypto mcap.', src: 'CoinGecko Pro' },
+      { key: 'am-rel-share', label: 'Altcoin relative share', sub: 'Altcoin mcap as % of total, vs BTC, vs ETH.', src: 'CoinGecko Pro' },
+      { key: 'am-btc-ratio', label: 'BTC/Altcoin mcap ratio', sub: 'BTC mcap / altcoin mcap. Rising = BTC dominance.', src: 'CoinGecko Pro' },
+    ]},
+    { label: 'Relative Performance', charts: [
+      { key: 'alt-scatter', label: 'Performance vs BTC', sub: 'Scatter: % vs BTC, volatility vs BTC.', src: 'CoinGecko Pro' },
+      { key: 'alt-altseason', label: 'Altseason indicator', sub: '% of top-50 alts outperforming BTC over 90d.', src: 'CoinGecko Pro' },
+      { key: 'alt-beta', label: 'Beta to BTC', sub: '60d beta to BTC vs 60d alpha.', src: 'CoinGecko Pro' },
+    ]},
+    { label: 'Correlation', charts: [
+      { key: 'alt-heatmap', label: 'Correlation heatmap', sub: 'Rolling 30d pairwise Pearson correlations.', src: 'CoinGecko Pro' },
+      { key: 'am-intracorr', label: 'Altcoin intracorrelation', sub: 'Avg pairwise correlation within top 10/25/50/100/250 alts.', src: 'CoinGecko Pro' },
+    ]},
+    { label: 'Drawdown', charts: [
+      { key: 'alt-ath-drawdown', label: 'Distance from ATH', sub: 'Current drawdown from ATH, sorted worst-first.', src: 'CoinGecko Pro' },
+      { key: 'alt-drawdown-ts', label: 'Drawdown over time', sub: 'Drawdown from running ATH over time.', src: 'CoinGecko Pro' },
+    ]},
+    { label: 'Derivatives', charts: [
+      { key: 'alt-funding-heatmap', label: 'Funding rate heatmap', sub: 'Funding rates by asset over time.', src: 'CoinGecko Pro + Derivatives' },
+    ]},
+  ]},
+  baskets: { label: 'Baskets', groups: [
+    { label: 'Price Action', charts: [
+      { key: 'sec-equal', label: 'Equal-weighted', sub: 'Equal-weighted sector index. Rebased to 100.', src: 'CoinGecko Pro' },
+      { key: 'sec-mcap', label: 'Marketcap-weighted', sub: 'Marketcap-weighted sector index. Rebased to 100.', src: 'CoinGecko Pro' },
+    ]},
+    { label: 'Market Cap', charts: [
+      { key: 'mc-total', label: 'Total market cap', sub: 'Sum of constituent market caps per sector.', src: 'CoinGecko Pro' },
+      { key: 'mc-median', label: 'Median market cap', sub: 'Median constituent market cap per sector.', src: 'CoinGecko Pro' },
+      { key: 'sec-dominance', label: 'Dominance over time', sub: 'Each sector mcap as % of total, stacked area.', src: 'CoinGecko Pro' },
+    ]},
+    { label: 'Correlation', charts: [
+      { key: 'sec-intra', label: 'Intracorrelation', sub: 'Rolling pairwise correlation between sectors.', src: 'CoinGecko Pro' },
+      { key: 'sec-vs', label: 'vs BTC / ETH / Alts', sub: 'Rolling correlation of sectors vs reference asset.', src: 'CoinGecko Pro' },
+      { key: 'sec-xheatmap', label: 'Cross-sector heatmap', sub: '30d pairwise Pearson between all sector indices.', src: 'CoinGecko Pro' },
+    ]},
+    { label: 'Momentum', charts: [
+      { key: 'sec-mom', label: '30d Rolling return', sub: 'Rolling N-day return of EW sector index.', src: 'CoinGecko Pro' },
+      { key: 'sec-zscore', label: 'Z-score of returns', sub: 'Z-score of daily returns vs rolling window.', src: 'CoinGecko Pro' },
+      { key: 'sec-cumulative', label: 'Cumulative returns ranking', sub: 'Total return over period, sorted.', src: 'CoinGecko Pro' },
+    ]},
+    { label: 'Volatility', charts: [
+      { key: 'sec-vol', label: 'Realized volatility', sub: '30d rolling annualized vol of EW log returns.', src: 'CoinGecko Pro' },
+      { key: 'sec-drawdown', label: 'Drawdown from peak', sub: 'Rolling drawdown from peak of EW index.', src: 'CoinGecko Pro' },
+    ]},
+    { label: 'Breadth', charts: [
+      { key: 'sec-breadth', label: 'Breadth indicator', sub: '% of constituents above their 50d SMA.', src: 'CoinGecko Pro' },
+    ]},
+    { label: 'Derivatives', charts: [
+      { key: 'sec-funding', label: 'Sector funding rate', sub: 'Avg 8h funding rate by sector.', src: 'CoinGecko Pro + Derivatives' },
+      { key: 'sec-oi', label: 'Sector open interest', sub: 'Sum of OI across constituents.', src: 'CoinGecko Pro + Derivatives' },
+    ]},
+    { label: 'Rotation', charts: [
+      { key: 'sec-rrg', label: 'RRG scatter', sub: 'Which sectors are leading, catching up, losing steam, or lagging.', src: 'CoinGecko Pro' },
+    ]},
+    { label: 'Analysis', charts: [
+      { key: 'ana-bubble', label: 'Momentum vs correlation', sub: 'Bubble: Y=momentum, X=autocorrelation, Size=mcap.', src: 'CoinGecko Pro' },
+      { key: 'sec-sharpe', label: 'Risk-adjusted returns', sub: 'Scatter: x=30d vol, y=30d return.', src: 'CoinGecko Pro' },
+    ]},
+  ]},
+  crypto_market: { label: 'Crypto Market', groups: [
+    { label: 'Market Cap', charts: [
+      { key: 'cm-total-mcap', label: 'Total market cap', sub: 'Total crypto market cap with 50d and 200d MAs.', src: 'CoinGecko Pro' },
+    ]},
   ]},
   macro: { label: 'Macro', groups: [
     { label: 'Price Action', charts: [
@@ -70,6 +142,16 @@ const TABS = {
     ]},
     { label: 'Flows', charts: [
       { key: 'mac-stablecoin', label: 'Stablecoin supply', sub: 'Total stablecoin mcap.', src: 'CoinGecko Pro' },
+    ]},
+  ]},
+  etf: { label: 'ETF', groups: [
+    { label: 'Flows', charts: [
+      { key: 'etf-net-flows', label: 'Trailing — spot ETF flows', sub: 'Trailing net flows for BTC and ETH spot ETFs.', src: 'Farside Investors' },
+      { key: 'etf-daily-bar', label: 'Daily — spot ETF flows', sub: 'Daily net inflows/outflows. Stacked bar chart.', src: 'Farside Investors' },
+      { key: 'etf-weekly-bar', label: 'Weekly — spot ETF flows', sub: 'Weekly aggregated net flows. Stacked bar chart.', src: 'Farside Investors' },
+    ]},
+    { label: 'Assets Under Management', charts: [
+      { key: 'etf-total-aum', label: 'Total AuM', sub: 'Cumulative AuM for BTC and ETH spot ETFs.', src: 'Farside Investors' },
     ]},
   ]},
   data: { label: 'Data', groups: [

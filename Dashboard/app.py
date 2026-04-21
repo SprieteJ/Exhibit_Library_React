@@ -35,6 +35,7 @@ from api.ethereum import (handle_eth_ma, handle_eth_ma_gap, handle_eth_200d_dev,
 from api.alt_market import (handle_alt_mcap, handle_alt_mcap_gap, handle_alt_mcap_dev,
                              handle_dominance_shares, handle_alt_relative_share,
                              handle_btc_alt_ratio, handle_alt_intracorr)
+from api.etf       import (handle_etf_flows, handle_etf_flows_weekly, handle_etf_aum)
 
 PORT     = int(os.environ.get("PORT", 8080))
 BASE_DIR = Path(__file__).parent
@@ -154,6 +155,9 @@ class Handler(BaseHTTPRequestHandler):
             elif p == "/api/macro-sharpe":      self.send_json(handle_macro_sharpe(params))
             elif p == "/api/macro-btc-corr":    self.send_json(handle_macro_btc_corr(params))
             elif p == "/api/rule-history":       self.send_json(handle_rule_history(params))
+            elif p == "/api/etf-flows":         self.send_json(handle_etf_flows(params))
+            elif p == "/api/etf-flows-weekly":  self.send_json(handle_etf_flows_weekly(params))
+            elif p == "/api/etf-aum":           self.send_json(handle_etf_aum(params))
 
             # ── Static files from React build ─────────────────────────────
             elif p.startswith("/assets/"):
