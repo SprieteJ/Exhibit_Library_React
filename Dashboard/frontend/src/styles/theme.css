@@ -86,9 +86,11 @@ input[type=date], input[type=number] { width: 100%; background: var(--input-bg);
 .preset:hover { border-color: var(--spine); color: var(--graphite); }
 .preset.active { background: var(--graphite); border-color: var(--graphite); color: var(--bg); }
 
-/* Export button + options */
-.export-btn { display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: var(--radius); border: 1px solid var(--border); background: var(--surface); color: var(--muted); cursor: pointer; transition: all 0.15s; flex-shrink: 0; }
+/* Export button + dropdown */
+.export-wrap { position: relative; flex-shrink: 0; }
+.export-btn { display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: var(--radius); border: 1px solid var(--border); background: var(--surface); color: var(--muted); cursor: pointer; transition: all 0.15s; }
 .export-btn:hover { border-color: var(--spine); color: var(--graphite); }
-.export-options { display: flex; gap: 14px; padding: 0 22px 2px; flex-shrink: 0; }
-.export-options label { display: flex; align-items: center; gap: 4px; font-size: 11px; color: var(--muted); cursor: pointer; user-select: none; }
-.export-options input[type=checkbox] { accent-color: var(--graphite); width: 13px; height: 13px; cursor: pointer; }
+.export-drop { position: absolute; top: 36px; right: 0; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: 0 4px 12px rgba(0,0,0,0.12); z-index: 50; min-width: 180px; overflow: hidden; }
+.export-drop button { display: block; width: 100%; text-align: left; padding: 10px 14px; font-family: var(--font); font-size: 13px; color: var(--graphite); background: none; border: none; cursor: pointer; transition: background 0.1s; }
+.export-drop button:hover { background: var(--tag-bg); }
+.export-drop button + button { border-top: 1px solid var(--border); }
