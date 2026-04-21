@@ -34,7 +34,7 @@ export default function EthDrawdown({ from, to }) {
       loading={loading} error={error} chartType="line" chartData={chartData}
       chartOptions={{
         scales: {
-          x: xAxisConfig(data.dates),
+          x: xAxisConfig(data?.dates || []),
           y: { max: 0, ticks: { ...YTICK, callback: v => v.toFixed(0) + '%' }, grid: YGRID },
         },
         plugins: { legend: { display: false } },

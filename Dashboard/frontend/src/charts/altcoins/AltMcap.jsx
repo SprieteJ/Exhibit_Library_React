@@ -16,5 +16,5 @@ export default function AltMcap({ from, to }) {
     if (last) summary = <div className="perf-item"><span style={{ color: '#00D64A', fontWeight: 600 }}>Alt Mcap</span> ${fmtBig(last)}</div>;
   }
   return <ChartPanel title="Altcoin Market Cap (ex-BTC, ex-ETH)" source="Source: CoinGecko Pro" loading={loading} error={error} chartType="line" chartData={chartData}
-    chartOptions={{ scales: { x: xAxisConfig(data.dates), y: { ticks: { ...YTICK, callback: v => '$' + fmtBig(v) }, grid: YGRID } }, plugins: { legend: { display: true, labels: { color: '#888', font: { size: 11 }, boxWidth: 12 } } } }} summary={summary} />;
+    chartOptions={{ scales: { x: xAxisConfig(data?.dates || []), y: { ticks: { ...YTICK, callback: v => '$' + fmtBig(v) }, grid: YGRID } }, plugins: { legend: { display: true, labels: { color: '#888', font: { size: 11 }, boxWidth: 12 } } } }} summary={summary} />;
 }

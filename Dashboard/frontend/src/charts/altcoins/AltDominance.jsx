@@ -22,5 +22,5 @@ export default function AltDominance({ from, to }) {
     </>);
   }
   return <ChartPanel title="Dominance Shares" source="Source: CoinGecko Pro" loading={loading} error={error} chartType="line" chartData={chartData}
-    chartOptions={{ scales: { x: xAxisConfig(data.dates), y: { stacked: true, max: 100, ticks: { ...YTICK, callback: v => v + '%' }, grid: YGRID } }, plugins: { legend: { display: true, labels: { color: '#888', font: { size: 11 }, boxWidth: 12 } } } }} summary={summary} />;
+    chartOptions={{ scales: { x: xAxisConfig(data?.dates || []), y: { stacked: true, max: 100, ticks: { ...YTICK, callback: v => v + '%' }, grid: YGRID } }, plugins: { legend: { display: true, labels: { color: '#888', font: { size: 11 }, boxWidth: 12 } } } }} summary={summary} />;
 }

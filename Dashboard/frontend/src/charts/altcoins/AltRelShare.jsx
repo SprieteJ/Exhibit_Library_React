@@ -14,5 +14,5 @@ export default function AltRelShare({ from, to }) {
     ]};
   }
   return <ChartPanel title="Altcoin Relative Share" source="Source: CoinGecko Pro" loading={loading} error={error} chartType="line" chartData={chartData}
-    chartOptions={{ scales: { x: xAxisConfig(data.dates), y: { position: 'left', ticks: { ...YTICK, callback: v => v.toFixed(0) + '%' }, grid: YGRID, title: { display: true, text: 'vs Total %', color: '#888', font: { size: 11 } } }, y1: { position: 'right', ticks: { ...YTICK, callback: v => v.toFixed(0) + '%' }, grid: { display: false } } }, plugins: { legend: { display: true, labels: { color: '#888', font: { size: 11 }, boxWidth: 12 } } } }} />;
+    chartOptions={{ scales: { x: xAxisConfig(data?.dates || []), y: { position: 'left', ticks: { ...YTICK, callback: v => v.toFixed(0) + '%' }, grid: YGRID, title: { display: true, text: 'vs Total %', color: '#888', font: { size: 11 } } }, y1: { position: 'right', ticks: { ...YTICK, callback: v => v.toFixed(0) + '%' }, grid: { display: false } } }, plugins: { legend: { display: true, labels: { color: '#888', font: { size: 11 }, boxWidth: 12 } } } }} />;
 }

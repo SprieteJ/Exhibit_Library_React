@@ -36,7 +36,7 @@ export default function MacroRealYields({ from, to }) {
       chartType="line" chartData={chartData}
       chartOptions={{
         scales: {
-          x: xAxisConfig(data.dates),
+          x: xAxisConfig(data?.dates || []),
           y:  { position: 'left',  ticks: { ...YTICK, callback: v => v.toFixed(1) + '%' }, grid: YGRID, title: { display: true, text: 'Yield %', color: '#888', font: { size: 11 } } },
           y1: { position: 'right', ticks: { ...YTICK, callback: v => '$' + (v >= 1000 ? (v/1000).toFixed(0) + 'k' : v) }, grid: { display: false } },
         },

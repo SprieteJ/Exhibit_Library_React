@@ -37,7 +37,7 @@ export default function MacroIgvBtc({ from, to, window: win }) {
       chartType="line" chartData={chartData}
       chartOptions={{
         scales: {
-          x: xAxisConfig(data.dates),
+          x: xAxisConfig(data?.dates || []),
           y:  { position: 'left',  ticks: { ...YTICK }, grid: YGRID, title: { display: true, text: 'IGV', color: '#888', font: { size: 11 } } },
           y1: { position: 'right', ticks: { ...YTICK, callback: v => '$' + (v >= 1000 ? (v/1000).toFixed(0) + 'k' : v) }, grid: { display: false } },
           y2: { display: false, min: -1, max: 1 },

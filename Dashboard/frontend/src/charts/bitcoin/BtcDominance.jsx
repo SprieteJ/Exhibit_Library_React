@@ -30,7 +30,7 @@ export default function BtcDominance({ from, to }) {
       chartType="line" chartData={chartData}
       chartOptions={{
         scales: {
-          x: xAxisConfig(data.dates),
+          x: xAxisConfig(data?.dates || []),
           y: { ticks: { ...YTICK, callback: v => v.toFixed(0) + '%' }, grid: YGRID },
         },
         plugins: { legend: { display: false } },

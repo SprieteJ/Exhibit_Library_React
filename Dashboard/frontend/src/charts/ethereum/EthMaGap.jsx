@@ -31,7 +31,7 @@ export default function EthMaGap({ from, to }) {
       loading={loading} error={error} chartType="bar" chartData={chartData}
       chartOptions={{
         scales: {
-          x: xAxisConfig(data.dates),
+          x: xAxisConfig(data?.dates || []),
           y: { ticks: { ...YTICK, callback: v => v.toFixed(0) + '%' }, grid: YGRID },
         },
         plugins: { legend: { display: false } },

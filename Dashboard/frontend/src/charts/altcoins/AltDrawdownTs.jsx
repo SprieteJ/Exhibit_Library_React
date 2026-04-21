@@ -18,5 +18,5 @@ export default function AltDrawdownTs({ from, to }) {
     chartData = { labels: data.dates, datasets };
   }
   return <ChartPanel title="Altcoin Drawdown Over Time" source="Source: CoinGecko Pro · top 10 by mcap" loading={loading} error={error} chartType="line" chartData={chartData}
-    chartOptions={{ scales: { x: xAxisConfig(data.dates), y: { max: 0, ticks: { ...YTICK, callback: v => v + '%' }, grid: YGRID } }, plugins: { legend: { display: true, labels: { color: '#888', font: { size: 10 }, boxWidth: 10 } } } }} />;
+    chartOptions={{ scales: { x: xAxisConfig(data?.dates || []), y: { max: 0, ticks: { ...YTICK, callback: v => v + '%' }, grid: YGRID } }, plugins: { legend: { display: true, labels: { color: '#888', font: { size: 10 }, boxWidth: 10 } } } }} />;
 }

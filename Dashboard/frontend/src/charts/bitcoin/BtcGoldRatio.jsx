@@ -30,7 +30,7 @@ export default function BtcGoldRatio({ from, to }) {
       chartType="line" chartData={chartData}
       chartOptions={{
         scales: {
-          x: xAxisConfig(data.dates),
+          x: xAxisConfig(data?.dates || []),
           y: { ticks: YTICK, grid: YGRID },
         },
         plugins: { legend: { display: false } },

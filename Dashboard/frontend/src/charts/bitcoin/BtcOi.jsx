@@ -29,7 +29,7 @@ export default function BtcOi({ from, to }) {
       chartType="line" chartData={chartData}
       chartOptions={{
         scales: {
-          x: xAxisConfig(data.dates),
+          x: xAxisConfig(data?.dates || []),
           y:  { position: 'left',  ticks: { ...YTICK, callback: v => '$' + fmtBig(v) }, grid: YGRID },
           y1: { position: 'right', ticks: { ...YTICK, callback: v => '$' + fmtBig(v) }, grid: { display: false } },
         },

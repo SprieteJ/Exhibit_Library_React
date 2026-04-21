@@ -26,7 +26,7 @@ export default function BtcGold({ from, to }) {
       chartType="line" chartData={chartData}
       chartOptions={{
         scales: {
-          x: xAxisConfig(data.dates),
+          x: xAxisConfig(data?.dates || []),
           y:  { position: 'left',  ticks: { ...YTICK, callback: v => '$' + fmtBig(v) }, grid: YGRID, title: { display: true, text: 'BTC', color: '#888', font: { size: 11 } } },
           y1: { position: 'right', ticks: { ...YTICK, callback: v => '$' + v.toFixed(0) }, grid: { display: false }, title: { display: true, text: 'GLD', color: '#888', font: { size: 11 } } },
         },

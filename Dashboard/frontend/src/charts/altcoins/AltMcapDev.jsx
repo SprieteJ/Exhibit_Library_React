@@ -13,5 +13,5 @@ export default function AltMcapDev({ from, to }) {
     if (last != null) summary = <div className="perf-item"><span style={{ color: last >= 0 ? '#00D64A' : '#EC5B5B', fontWeight: 600 }}>Deviation</span> <span className={last >= 0 ? 'pos' : 'neg'}>{last >= 0 ? '+' : ''}{last.toFixed(1)}%</span></div>;
   }
   return <ChartPanel title="Altcoin Mcap 200d MA Deviation" source="Source: CoinGecko Pro" loading={loading} error={error} chartType="bar" chartData={chartData}
-    chartOptions={{ scales: { x: xAxisConfig(data.dates), y: { ticks: { ...YTICK, callback: v => v.toFixed(0) + '%' }, grid: YGRID } }, plugins: { legend: { display: false } } }} summary={summary} />;
+    chartOptions={{ scales: { x: xAxisConfig(data?.dates || []), y: { ticks: { ...YTICK, callback: v => v.toFixed(0) + '%' }, grid: YGRID } }, plugins: { legend: { display: false } } }} summary={summary} />;
 }

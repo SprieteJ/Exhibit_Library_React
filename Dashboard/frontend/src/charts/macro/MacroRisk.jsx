@@ -45,7 +45,7 @@ export default function MacroRisk({ from, to }) {
       chartType="line" chartData={chartData}
       chartOptions={{
         scales: {
-          x: xAxisConfig(data.dates),
+          x: xAxisConfig(data?.dates || []),
           y:  { position: 'left', min: 0, max: 100, ticks: { ...YTICK, callback: v => v + '%' }, grid: YGRID, title: { display: true, text: 'Score', color: '#888', font: { size: 11 } } },
           y1: { position: 'right', ticks: { ...YTICK, callback: v => '$' + (v >= 1000 ? (v/1000).toFixed(0) + 'k' : v) }, grid: { display: false } },
         },

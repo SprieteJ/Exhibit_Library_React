@@ -39,7 +39,7 @@ export default function BtcMcap({ from, to }) {
       chartType="line" chartData={chartData}
       chartOptions={{
         scales: {
-          x: xAxisConfig(data.dates),
+          x: xAxisConfig(data?.dates || []),
           y: { ticks: { ...YTICK, callback: v => '$' + fmtBig(v) }, grid: YGRID },
         },
         plugins: { legend: { display: true, labels: { color: '#888', font: { size: 11 }, boxWidth: 12, filter: item => item.text !== 'BTC Market Cap' } } },

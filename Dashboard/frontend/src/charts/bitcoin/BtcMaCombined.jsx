@@ -116,7 +116,7 @@ export default function BtcMaCombined({ from, to }) {
       <div className="chart-area" style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
         <div className={`spinner-wrap${loading ? ' on' : ''}`}><div className="spinner" /></div>
         {error && !loading && (<div className="empty" style={{ display: 'flex' }}><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" /></svg><p>Error: {error.message}</p></div>)}
-        {maChart && <MiniChart ref={topRef} height="calc(65% - 4px)" chartData={maChart} chartType="line" chartOptions={{ scales: { x: xAxisConfig(ma.data.dates, { display: false }), y: { type: 'logarithmic', ticks: { ...YTICK, callback: v => '$' + fmtBig(v) }, grid: YGRID } } }} />}
+        {maChart && <MiniChart ref={topRef} height="calc(65% - 4px)" chartData={maChart} chartType="line" chartOptions={{ scales: { x: xAxisConfig(ma.data?.dates, { display: false } || []), y: { type: 'logarithmic', ticks: { ...YTICK, callback: v => '$' + fmtBig(v) }, grid: YGRID } } }} />}
         <div style={{ height: 1, background: 'var(--border)', flexShrink: 0 }} />
         {gapChart && <MiniChart ref={botRef} height="calc(35% - 5px)" chartData={gapChart} chartType="bar" chartOptions={{ scales: { x: xAxisConfig(ma.data?.dates || gap.data?.dates || []), y: { ticks: { ...YTICK, callback: v => v.toFixed(0) + '%' }, grid: YGRID } }, plugins: { legend: { display: false } } }} />}
       </div>

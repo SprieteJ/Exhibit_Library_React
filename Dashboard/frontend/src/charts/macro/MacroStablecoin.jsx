@@ -39,7 +39,7 @@ export default function MacroStablecoin({ from, to }) {
       chartType="line" chartData={chartData}
       chartOptions={{
         scales: {
-          x: xAxisConfig(data.dates),
+          x: xAxisConfig(data?.dates || []),
           y: { ticks: { ...YTICK, callback: v => '$' + fmtBig(v) }, grid: YGRID },
         },
         plugins: { legend: { display: false } },

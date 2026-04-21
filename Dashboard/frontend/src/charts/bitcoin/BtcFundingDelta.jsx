@@ -26,7 +26,7 @@ export default function BtcFundingDelta({ from, to, window: win }) {
       chartType="line" chartData={chartData}
       chartOptions={{
         scales: {
-          x: xAxisConfig(data.dates),
+          x: xAxisConfig(data?.dates || []),
           y:  { position: 'left',  ticks: { ...YTICK, callback: v => v.toFixed(0) + ' bps' }, grid: YGRID, title: { display: true, text: 'Funding Δ', color: '#888', font: { size: 11 } } },
           y1: { position: 'right', ticks: { ...YTICK, callback: v => v.toFixed(0) + '%' }, grid: { display: false }, title: { display: true, text: 'Price Δ', color: '#888', font: { size: 11 } } },
         },

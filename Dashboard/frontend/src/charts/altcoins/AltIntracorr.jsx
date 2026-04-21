@@ -15,5 +15,5 @@ export default function AltIntracorr({ from, to }) {
     }))};
   }
   return <ChartPanel title="Altcoin Intracorrelation" source="Source: CoinGecko Pro · precomputed 30d pairwise avg" loading={loading} error={error} chartType="line" chartData={chartData}
-    chartOptions={{ scales: { x: xAxisConfig(data.dates), y: { min: 0, max: 1, ticks: { ...YTICK, callback: v => v.toFixed(1) }, grid: YGRID } }, plugins: { legend: { display: true, labels: { color: '#888', font: { size: 11 }, boxWidth: 12 } } } }} />;
+    chartOptions={{ scales: { x: xAxisConfig(data?.dates || []), y: { min: 0, max: 1, ticks: { ...YTICK, callback: v => v.toFixed(1) }, grid: YGRID } }, plugins: { legend: { display: true, labels: { color: '#888', font: { size: 11 }, boxWidth: 12 } } } }} />;
 }
