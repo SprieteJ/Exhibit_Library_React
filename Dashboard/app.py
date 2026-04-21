@@ -162,6 +162,8 @@ class Handler(BaseHTTPRequestHandler):
             # ── Static files from React build ─────────────────────────────
             elif p.startswith("/assets/"):
                 self.send_file(DIST_DIR / p[1:], cache_secs=31536000)
+            elif p.startswith("/static/"):
+                self.send_file(DIST_DIR / p[1:], cache_secs=86400)
 
             # ── SPA fallback: serve index.html for all other routes ───────
             else:
