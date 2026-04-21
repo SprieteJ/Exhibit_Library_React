@@ -85,6 +85,7 @@ const CmTotalMcap   = lazy(() => import('./charts/crypto_market/CmTotalMcap'));
 
 // ── Control Center ───────────────────────────────────────────────────────────
 const CCMatrix      = lazy(() => import('./charts/control_center/CCMatrix'));
+const CCRegime      = lazy(() => import('./charts/control_center/CCRegime'));
 
 // ── ETF ──────────────────────────────────────────────────────────────────────
 const EtfNetFlows   = lazy(() => import('./charts/etf/EtfNetFlows'));
@@ -125,6 +126,7 @@ const CHART_COMPONENTS = {
   'cm-total-mcap': CmTotalMcap,
   // Control Center
   'cc-matrix': CCMatrix,
+  'cc-regime': CCRegime,
   // ETF
   'etf-net-flows': EtfNetFlows, 'etf-daily-bar': EtfDailyBar,
   'etf-weekly-bar': EtfWeeklyBar, 'etf-total-aum': EtfTotalAum,
