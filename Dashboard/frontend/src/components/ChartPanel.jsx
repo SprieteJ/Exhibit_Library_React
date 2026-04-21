@@ -1,12 +1,8 @@
 import { useRef, useEffect, useState, useCallback, useMemo } from 'react';
 import Chart from 'chart.js/auto';
 import exportPng from '../utils/exportPng';
-import { drawingPlugin, createDrawingState, attachDrawingHandlers } from '../utils/drawingPlugin';
+import { createDrawingState, attachDrawingHandlers, renderAnnotations, compositeOverlay } from '../utils/drawingPlugin';
 import DrawingToolbar from './DrawingToolbar';
-
-if (!Chart.registry.plugins.get('drawing')) {
-  Chart.register(drawingPlugin);
-}
 
 const CDEFAULT = {
   responsive: true, maintainAspectRatio: false, animation: { duration: 0 },
@@ -22,6 +18,7 @@ _logoImg.src = '/static/logo.png';
 
 export default function ChartPanel({ title, source, loading, error, chartType, chartData, chartOptions, summary, children }) {
   const canvasRef = useRef(null);
+  const overlayRef = useRef(null);
   const chartRef = useRef(null);
   const hiddenRef = useRef({});
   const cleanupRef = useRef(null);
@@ -31,21 +28,19 @@ export default function ChartPanel({ title, source, loading, error, chartType, c
   const drawState = useMemo(() => createDrawingState(), [chartData]);
 
   const triggerUpdate = useCallback(() => {
-    if (chartRef.current) {
-      // Toggle tooltip/interaction based on whether a drawing tool is active
-      const c = chartRef.current;
-      if (drawState.enabled) {
-        c.options.plugins.tooltip.enabled = false;
-        c.options.events = []; // disable Chart.js internal event handling
-      } else {
-        c.options.plugins.tooltip.enabled = true;
-        c.options.events = ['mousemove', 'mouseout', 'click', 'touchstart', 'touchmove'];
-      }
-      c.update('none');
-      c.draw();
-    }
     forceRender(n => n + 1);
-  }, [drawState]);
+  }, []);
+
+  // Sync overlay size with chart canvas
+  const syncOverlaySize = useCallback(() => {
+    const canvas = canvasRef.current;
+    const overlay = overlayRef.current;
+    if (!canvas || !overlay) return;
+    overlay.width = canvas.width;
+    overlay.height = canvas.height;
+    overlay.style.width = canvas.style.width;
+    overlay.style.height = canvas.style.height;
+  }, []);
 
   useEffect(() => {
     if (children || !chartData || !canvasRef.current) return;
@@ -62,28 +57,34 @@ export default function ChartPanel({ title, source, loading, error, chartType, c
       ...ds, hidden: hiddenRef.current[ds.label] ?? ds.hidden ?? false,
     }));
 
-    const mergedOpts = {
-      ...CDEFAULT, ...chartOptions,
-      plugins: {
-        ...CDEFAULT.plugins, ...chartOptions?.plugins,
-        drawing: drawState,
-      },
-    };
-
     const ctx = canvasRef.current.getContext('2d');
     chartRef.current = new Chart(ctx, {
       type: chartType || 'line',
       data: { ...chartData, datasets },
-      options: mergedOpts,
+      options: { ...CDEFAULT, ...chartOptions, plugins: { ...CDEFAULT.plugins, ...chartOptions?.plugins } },
     });
 
-    cleanupRef.current = attachDrawingHandlers(canvasRef.current, chartRef.current, drawState, triggerUpdate);
+    // Sync overlay and attach handlers
+    syncOverlaySize();
+    if (overlayRef.current && chartRef.current) {
+      cleanupRef.current = attachDrawingHandlers(overlayRef.current, chartRef.current, drawState, triggerUpdate);
+    }
+
+    // Re-sync overlay on chart resize
+    const ro = new ResizeObserver(() => {
+      syncOverlaySize();
+      if (chartRef.current && overlayRef.current) {
+        renderAnnotations(chartRef.current, drawState, overlayRef.current.getContext('2d'));
+      }
+    });
+    ro.observe(canvasRef.current);
 
     return () => {
+      ro.disconnect();
       if (cleanupRef.current) { cleanupRef.current(); cleanupRef.current = null; }
       if (chartRef.current) { chartRef.current.destroy(); chartRef.current = null; }
     };
-  }, [chartData, chartType, chartOptions, children, drawState, triggerUpdate]);
+  }, [chartData, chartType, chartOptions, children, drawState, triggerUpdate, syncOverlaySize]);
 
   useEffect(() => {
     if (!dropOpen) return;
@@ -94,18 +95,24 @@ export default function ChartPanel({ title, source, loading, error, chartType, c
 
   const handleExport = useCallback((mode) => {
     if (!chartRef.current) return;
+    // Composite overlay onto chart canvas before export
+    if (overlayRef.current && drawState.annotations.length) {
+      compositeOverlay(chartRef.current.canvas, overlayRef.current);
+    }
     const slug = (title || 'chart').toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '');
     exportPng(chartRef.current, { title: title || '', filename: slug, mode, logoImg: _logoImg });
+    // Re-render overlay after export restores the chart
+    if (overlayRef.current && chartRef.current) {
+      syncOverlaySize();
+      renderAnnotations(chartRef.current, drawState, overlayRef.current.getContext('2d'));
+    }
     setDropOpen(false);
-  }, [title]);
+  }, [title, drawState, syncOverlaySize]);
 
   const hasChart = !children && chartData;
 
-  // Determine cursor
   let cursor = '';
-  if (drawState.enabled) {
-    cursor = drawState.tool === 'range' ? 'ns-resize' : 'crosshair';
-  }
+  if (drawState.enabled) cursor = drawState.tool === 'range' ? 'ns-resize' : 'crosshair';
 
   return (
     <div className="main">
@@ -131,8 +138,17 @@ export default function ChartPanel({ title, source, loading, error, chartType, c
       {hasChart && <DrawingToolbar drawState={drawState} onUpdate={triggerUpdate} />}
 
       <div className="perf-row">{summary || null}</div>
-      <div className="chart-area" style={cursor ? { cursor } : {}}>
-        {children ? children : <canvas ref={canvasRef} />}
+      <div className="chart-area">
+        {children ? children : (
+          <div style={{ position: 'relative', width: '100%', height: '100%' }}>
+            <canvas ref={canvasRef} style={{ display: 'block', width: '100%', height: '100%' }} />
+            <canvas ref={overlayRef} className="drawing-overlay" style={{
+              position: 'absolute', top: 0, left: 0, width: '100%', height: '100%',
+              pointerEvents: (drawState.enabled || drawState.annotations.length) ? 'auto' : 'none',
+              cursor: cursor || undefined,
+            }} />
+          </div>
+        )}
         <div className={`spinner-wrap${loading ? ' on' : ''}`}><div className="spinner" /></div>
         {error && !loading && (
           <div className="empty" style={{ display: 'flex' }}>

@@ -1,8 +1,8 @@
 /**
- * drawingPlugin.js v3 — Custom Chart.js annotation plugin.
- * All interaction via mousedown/mousemove/mouseup (no click handler).
- * Tools: hline, trendline, range. All draggable after placement.
- * Supports Ctrl+Z undo via keyboard handler.
+ * drawingPlugin.js v4 — Overlay canvas approach.
+ * Annotations render on a separate transparent canvas layered on top of Chart.js.
+ * This eliminates all conflicts with Chart.js rendering during drag/draw.
+ * On PNG export, both canvases are composited.
  */
 
 export function createDrawingState() {
@@ -12,8 +12,9 @@ export function createDrawingState() {
     annotations: [],
     pending: null,
     color: '#F7931A',
-    _dragTarget: null,
-    _phase: 0,  // trendline: 0=first click, 1=second click
+    _phase: 0,
+    _overlay: null,   // overlay canvas element
+    _chartRef: null,   // reference to Chart.js instance
   };
 }
 
@@ -35,7 +36,7 @@ function inArea(chart, x, y) {
 }
 
 function hitTest(chart, state, px, py) {
-  const T = 8;
+  const T = 10;
   for (let i = state.annotations.length - 1; i >= 0; i--) {
     const ann = state.annotations[i];
     if (ann.type === 'hline') {
@@ -73,10 +74,17 @@ function fmtVal(v) {
   return v.toFixed(4);
 }
 
-function drawAnnotations(chart, state) {
-  const ctx = chart.ctx;
+/**
+ * Render all annotations onto an overlay canvas context.
+ */
+export function renderAnnotations(chart, state, ctx) {
   const area = chart.chartArea;
   if (!area) return;
+
+  const w = ctx.canvas.width;
+  const h = ctx.canvas.height;
+  ctx.clearRect(0, 0, w, h);
+
   ctx.save();
   ctx.beginPath();
   ctx.rect(area.left, area.top, area.right - area.left, area.bottom - area.top);
@@ -87,7 +95,7 @@ function drawAnnotations(chart, state) {
 
   for (const ann of all) {
     const c = ann.color || state.color;
-    ctx.lineWidth = ann === state._dragTarget ? 2.5 : 1.5;
+    ctx.lineWidth = ann._dragging ? 2.5 : 1.5;
     ctx.setLineDash([]);
 
     if (ann.type === 'hline') {
@@ -109,8 +117,8 @@ function drawAnnotations(chart, state) {
     if (ann.type === 'range') {
       const py1 = yVal2Px(chart, ann.y1), py2 = yVal2Px(chart, ann.y2);
       if (py1 == null || py2 == null) continue;
-      const top = Math.min(py1, py2), h = Math.abs(py2 - py1);
-      ctx.fillStyle = c + '20'; ctx.fillRect(area.left, top, area.right - area.left, h);
+      const top = Math.min(py1, py2), h2 = Math.abs(py2 - py1);
+      ctx.fillStyle = c + '20'; ctx.fillRect(area.left, top, area.right - area.left, h2);
       ctx.strokeStyle = c; ctx.setLineDash([6, 4]);
       ctx.beginPath(); ctx.moveTo(area.left, py1); ctx.lineTo(area.right, py1);
       ctx.moveTo(area.left, py2); ctx.lineTo(area.right, py2); ctx.stroke(); ctx.setLineDash([]);
@@ -122,79 +130,53 @@ function drawAnnotations(chart, state) {
   ctx.restore();
 }
 
-export const drawingPlugin = {
-  id: 'drawing',
-  afterDraw(chart) {
-    const state = chart.options.plugins?.drawing;
-    if (!state || (!state.annotations.length && !state.pending)) return;
-    drawAnnotations(chart, state);
-  },
-};
-
-export function attachDrawingHandlers(canvas, chart, state, onUpdate) {
-  let downPos = null;    // mousedown position
-  let downTime = 0;      // mousedown timestamp
-  let dragging = false;  // true once mouse moves >4px from downPos
-  let dragHit = null;    // hit-tested annotation for drag
-  let dragStartVals = null;
+/**
+ * Attach mouse handlers to the OVERLAY canvas.
+ */
+export function attachDrawingHandlers(overlay, chart, state, onUpdate) {
+  let downPos = null, downTime = 0, dragging = false, dragHit = null, dragStartVals = null;
 
   function getPos(e) {
-    const r = canvas.getBoundingClientRect();
+    const r = overlay.getBoundingClientRect();
     return { x: e.clientX - r.left, y: e.clientY - r.top };
+  }
+
+  function repaint() {
+    const ctx = overlay.getContext('2d');
+    renderAnnotations(chart, state, ctx);
   }
 
   function handleMouseDown(e) {
     const pos = getPos(e);
     if (!inArea(chart, pos.x, pos.y)) return;
-    downPos = pos;
-    downTime = Date.now();
-    dragging = false;
+    downPos = pos; downTime = Date.now(); dragging = false;
 
-    // Check drag on existing annotation (when no tool or always)
     if (!state.tool) {
       const hit = hitTest(chart, state, pos.x, pos.y);
       if (hit) {
-        e.preventDefault();
+        e.preventDefault(); e.stopPropagation();
         dragHit = hit;
-        state._dragTarget = hit.ann;
+        hit.ann._dragging = true;
         const a = hit.ann;
         if (a.type === 'hline') dragStartVals = { y: a.y };
         else if (a.type === 'trendline') dragStartVals = { x1: a.x1, y1: a.y1, x2: a.x2, y2: a.y2 };
         else if (a.type === 'range') dragStartVals = { y1: a.y1, y2: a.y2 };
-        // Suppress Chart.js events during drag so tooltips don't fight with us
-        chart._savedEvents = chart.options.events;
-        chart.options.events = [];
-        if (chart.options.plugins?.tooltip) chart.options.plugins.tooltip.enabled = false;
-        canvas.style.cursor = 'grabbing';
-        chart.update('none');
+        overlay.style.cursor = 'grabbing';
+        document.addEventListener('mousemove', handleDocMove);
+        document.addEventListener('mouseup', handleDocUp);
       }
     }
   }
 
-  function handleMouseMove(e) {
+  function handleDocMove(e) {
     const pos = getPos(e);
+    if (downPos && !dragging && Math.hypot(pos.x - downPos.x, pos.y - downPos.y) > 4) dragging = true;
 
-    // Detect drag start (moved > 4px)
-    if (downPos && !dragging && Math.hypot(pos.x - downPos.x, pos.y - downPos.y) > 4) {
-      dragging = true;
-
-      // If a tool is active and it's range, start range creation
-      if (state.enabled && state.tool === 'range' && !dragHit) {
-        const yVal = yPx2Val(chart, downPos.y);
-        if (yVal != null) {
-          state.pending = { type: 'range', y1: yVal, y2: yVal, color: state.color };
-        }
-      }
-    }
-
-    // Dragging existing annotation
     if (dragging && dragHit && downPos) {
       const ann = dragHit.ann;
-      const yNow = yPx2Val(chart, pos.y);
-      const yStart = yPx2Val(chart, downPos.y);
+      const yNow = yPx2Val(chart, pos.y), yStart = yPx2Val(chart, downPos.y);
       if (yNow == null || yStart == null) return;
       const yDelta = yNow - yStart;
-
       if (ann.type === 'hline') ann.y = dragStartVals.y + yDelta;
       else if (ann.type === 'trendline') {
         if (dragHit.part === 'p1') { ann.x1 = xPx2Val(chart, pos.x) ?? ann.x1; ann.y1 = yNow; }
@@ -205,31 +187,45 @@ export function attachDrawingHandlers(canvas, chart, state, onUpdate) {
         else if (dragHit.part === 'edge2') ann.y2 = dragStartVals.y2 + yDelta;
         else { ann.y1 = dragStartVals.y1 + yDelta; ann.y2 = dragStartVals.y2 + yDelta; }
       }
-      chart.draw();
+      repaint();
       return;
     }
+  }
+
+  function handleDocUp(e) {
+    if (dragHit) dragHit.ann._dragging = false;
+    document.removeEventListener('mousemove', handleDocMove);
+    document.removeEventListener('mouseup', handleDocUp);
+    overlay.style.cursor = '';
+    dragging = false; dragHit = null; dragStartVals = null; downPos = null;
+    repaint();
+    onUpdate();
+  }
+
+  function handleMouseMove(e) {
+    const pos = getPos(e);
 
     // Range creation drag
     if (dragging && state.pending?.type === 'range') {
       const yVal = yPx2Val(chart, pos.y);
       if (yVal != null) state.pending.y2 = yVal;
-      chart.draw();
+      repaint();
       return;
     }
 
-    // Trendline: live preview of second point
+    // Trendline preview
     if (state.enabled && state.tool === 'trendline' && state._phase === 1 && state.pending) {
       if (!inArea(chart, pos.x, pos.y)) return;
       state.pending.x2 = xPx2Val(chart, pos.x) ?? state.pending.x2;
       state.pending.y2 = yPx2Val(chart, pos.y) ?? state.pending.y2;
-      chart.draw();
+      repaint();
       return;
     }
 
-    // Hover cursor
-    if (!state.tool && !dragging && inArea(chart, pos.x, pos.y)) {
+    // Hover cursor when no tool
+    if (!state.tool && inArea(chart, pos.x, pos.y)) {
       const hit = hitTest(chart, state, pos.x, pos.y);
-      canvas.style.cursor = hit ? 'grab' : '';
+      overlay.style.cursor = hit ? 'grab' : '';
     }
   }
 
@@ -243,117 +239,124 @@ export function attachDrawingHandlers(canvas, chart, state, onUpdate) {
         state.annotations.push({ ...state.pending });
       }
       state.pending = null;
-      downPos = null; dragging = false; dragHit = null;
-      onUpdate();
+      downPos = null; dragging = false;
+      repaint(); onUpdate();
       return;
     }
 
-    // Finish drag of existing annotation
-    if (dragging && dragHit) {
-      state._dragTarget = null;
-      // Restore Chart.js events
-      if (chart._savedEvents) {
-        chart.options.events = chart._savedEvents;
-        delete chart._savedEvents;
-      }
-      if (chart.options.plugins?.tooltip) chart.options.plugins.tooltip.enabled = true;
-      chart.update('none');
-      downPos = null; dragging = false; dragHit = null; dragStartVals = null;
-      canvas.style.cursor = '';
-      chart.draw();
-      onUpdate();
-      return;
-    }
-
-    // ── Click (not drag) ──
+    // Click placement
     if (wasClick && state.enabled && state.tool && inArea(chart, pos.x, pos.y)) {
-      const yVal = yPx2Val(chart, pos.y);
-      const xVal = xPx2Val(chart, pos.x);
+      const yVal = yPx2Val(chart, pos.y), xVal = xPx2Val(chart, pos.x);
       if (yVal == null) { downPos = null; return; }
 
       if (state.tool === 'hline') {
         state.annotations.push({ type: 'hline', y: yVal, color: state.color });
-        chart.draw();
-        onUpdate();
+        repaint(); onUpdate();
       }
-
       if (state.tool === 'trendline') {
         if (state._phase === 0) {
           state.pending = { type: 'trendline', x1: xVal, y1: yVal, x2: xVal, y2: yVal, color: state.color };
           state._phase = 1;
-          chart.draw();
-          onUpdate();
+          repaint(); onUpdate();
         } else {
-          state.pending.x2 = xVal;
-          state.pending.y2 = yVal;
+          state.pending.x2 = xVal; state.pending.y2 = yVal;
           state.annotations.push({ ...state.pending });
-          state.pending = null;
-          state._phase = 0;
-          chart.draw();
-          onUpdate();
+          state.pending = null; state._phase = 0;
+          repaint(); onUpdate();
         }
       }
-      // Range is handled by drag, not click
+
+      // Range: detect start of drag
+      if (state.tool === 'range') {
+        dragging = true;
+        state.pending = { type: 'range', y1: yVal, y2: yVal, color: state.color };
+      }
     }
 
-    downPos = null;
-    dragging = false;
-    dragHit = null;
-    dragStartVals = null;
+    downPos = null; dragging = false;
   }
 
-  // Keyboard: Ctrl+Z for undo
+  // Detect drag start for range on mousedown
+  function handleOverlayMouseDown(e) {
+    const pos = getPos(e);
+    if (!inArea(chart, pos.x, pos.y)) return;
+    downPos = pos; downTime = Date.now(); dragging = false;
+
+    // Drag existing annotation
+    handleMouseDown(e);
+
+    // Range tool: start tracking for drag
+    if (state.enabled && state.tool === 'range') {
+      const yVal = yPx2Val(chart, pos.y);
+      if (yVal != null) {
+        state.pending = { type: 'range', y1: yVal, y2: yVal, color: state.color };
+      }
+    }
+  }
+
+  function handleOverlayMouseMove(e) {
+    const pos = getPos(e);
+    if (downPos && !dragging && Math.hypot(pos.x - downPos.x, pos.y - downPos.y) > 4) dragging = true;
+
+    // Range creation
+    if (dragging && state.pending?.type === 'range' && state.tool === 'range') {
+      const yVal = yPx2Val(chart, pos.y);
+      if (yVal != null) state.pending.y2 = yVal;
+      repaint();
+      return;
+    }
+
+    handleMouseMove(e);
+  }
+
+  function handleOverlayMouseUp(e) {
+    // Range completion
+    if (dragging && state.pending?.type === 'range' && state.tool === 'range') {
+      if (Math.abs(state.pending.y1 - state.pending.y2) > 0.0001) {
+        state.annotations.push({ ...state.pending });
+      }
+      state.pending = null;
+      downPos = null; dragging = false;
+      repaint(); onUpdate();
+      return;
+    }
+
+    handleMouseUp(e);
+  }
+
+  // Keyboard: Ctrl+Z / Cmd+Z
   function handleKeyDown(e) {
     if ((e.ctrlKey || e.metaKey) && e.key === 'z') {
       e.preventDefault();
-      if (state.pending) {
-        state.pending = null;
-        state._phase = 0;
-      } else if (state.annotations.length) {
-        state.annotations.pop();
-      }
-      chart.draw();
-      onUpdate();
+      if (state.pending) { state.pending = null; state._phase = 0; }
+      else if (state.annotations.length) state.annotations.pop();
+      repaint(); onUpdate();
     }
   }
 
-  const preventCtx = (e) => { if (state.enabled) e.preventDefault(); };
-
-  // During drag, we listen on document so mouse can leave canvas smoothly
-  function startDocListeners() {
-    document.addEventListener('mousemove', handleMouseMove);
-    document.addEventListener('mouseup', handleMouseUpDoc);
-  }
-  function stopDocListeners() {
-    document.removeEventListener('mousemove', handleMouseMove);
-    document.removeEventListener('mouseup', handleMouseUpDoc);
-  }
-  function handleMouseUpDoc(e) {
-    handleMouseUp(e);
-    stopDocListeners();
-  }
-
-  // Wrap mousedown to also attach document listeners when dragging starts
-  function handleMouseDownWrap(e) {
-    handleMouseDown(e);
-    // If we started a drag (dragHit set or range pending), listen on document
-    if (dragHit || (state.pending?.type === 'range')) {
-      startDocListeners();
-    }
-  }
-
-  canvas.addEventListener('mousedown', handleMouseDownWrap);
-  canvas.addEventListener('mousemove', handleMouseMove);
-  canvas.addEventListener('mouseup', handleMouseUp);
-  canvas.addEventListener('contextmenu', preventCtx);
+  overlay.addEventListener('mousedown', handleOverlayMouseDown);
+  overlay.addEventListener('mousemove', handleOverlayMouseMove);
+  overlay.addEventListener('mouseup', handleOverlayMouseUp);
   document.addEventListener('keydown', handleKeyDown);
 
+  // Initial paint
+  repaint();
+
   return () => {
-    canvas.removeEventListener('mousedown', handleMouseDownWrap);
-    canvas.removeEventListener('mousemove', handleMouseMove);
-    canvas.removeEventListener('mouseup', handleMouseUp);
-    canvas.removeEventListener('contextmenu', preventCtx);
+    overlay.removeEventListener('mousedown', handleOverlayMouseDown);
+    overlay.removeEventListener('mousemove', handleOverlayMouseMove);
+    overlay.removeEventListener('mouseup', handleOverlayMouseUp);
     document.removeEventListener('keydown', handleKeyDown);
-    stopDocListeners();
+    document.removeEventListener('mousemove', handleDocMove);
+    document.removeEventListener('mouseup', handleDocUp);
   };
+}
+
+/**
+ * Composite the overlay onto the chart canvas for export.
+ * Call before toDataURL/drawImage in export functions.
+ */
+export function compositeOverlay(chartCanvas, overlayCanvas) {
+  const ctx = chartCanvas.getContext('2d');
+  ctx.drawImage(overlayCanvas, 0, 0);
 }
