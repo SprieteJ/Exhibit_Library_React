@@ -4,7 +4,6 @@ import exportPng from '../utils/exportPng';
 import { drawingPlugin, createDrawingState, attachDrawingHandlers } from '../utils/drawingPlugin';
 import DrawingToolbar from './DrawingToolbar';
 
-// Register the drawing plugin once
 if (!Chart.registry.plugins.get('drawing')) {
   Chart.register(drawingPlugin);
 }
@@ -29,13 +28,24 @@ export default function ChartPanel({ title, source, loading, error, chartType, c
   const [dropOpen, setDropOpen] = useState(false);
   const [, forceRender] = useState(0);
 
-  // One drawing state per ChartPanel instance, reset when chartData changes identity
   const drawState = useMemo(() => createDrawingState(), [chartData]);
 
   const triggerUpdate = useCallback(() => {
-    if (chartRef.current) chartRef.current.draw();
+    if (chartRef.current) {
+      // Toggle tooltip/interaction based on whether a drawing tool is active
+      const c = chartRef.current;
+      if (drawState.enabled) {
+        c.options.plugins.tooltip.enabled = false;
+        c.options.events = []; // disable Chart.js internal event handling
+      } else {
+        c.options.plugins.tooltip.enabled = true;
+        c.options.events = ['mousemove', 'mouseout', 'click', 'touchstart', 'touchmove'];
+      }
+      c.update('none');
+      c.draw();
+    }
     forceRender(n => n + 1);
-  }, []);
+  }, [drawState]);
 
   useEffect(() => {
     if (children || !chartData || !canvasRef.current) return;
@@ -67,7 +77,6 @@ export default function ChartPanel({ title, source, loading, error, chartType, c
       options: mergedOpts,
     });
 
-    // Attach drawing event handlers
     cleanupRef.current = attachDrawingHandlers(canvasRef.current, chartRef.current, drawState, triggerUpdate);
 
     return () => {
@@ -76,7 +85,6 @@ export default function ChartPanel({ title, source, loading, error, chartType, c
     };
   }, [chartData, chartType, chartOptions, children, drawState, triggerUpdate]);
 
-  // Close dropdown on outside click
   useEffect(() => {
     if (!dropOpen) return;
     const close = () => setDropOpen(false);
@@ -92,6 +100,12 @@ export default function ChartPanel({ title, source, loading, error, chartType, c
   }, [title]);
 
   const hasChart = !children && chartData;
+
+  // Determine cursor
+  let cursor = '';
+  if (drawState.enabled) {
+    cursor = drawState.tool === 'range' ? 'ns-resize' : 'crosshair';
+  }
 
   return (
     <div className="main">
@@ -114,11 +128,10 @@ export default function ChartPanel({ title, source, loading, error, chartType, c
         )}
       </div>
 
-      {/* Drawing toolbar — only for canvas charts */}
       {hasChart && <DrawingToolbar drawState={drawState} onUpdate={triggerUpdate} />}
 
       <div className="perf-row">{summary || null}</div>
-      <div className="chart-area" style={drawState.enabled ? { cursor: drawState.tool === 'range' ? 'ns-resize' : 'crosshair' } : {}}>
+      <div className="chart-area" style={cursor ? { cursor } : {}}>
         {children ? children : <canvas ref={canvasRef} />}
         <div className={`spinner-wrap${loading ? ' on' : ''}`}><div className="spinner" /></div>
         {error && !loading && (

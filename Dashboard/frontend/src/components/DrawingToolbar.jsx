@@ -17,18 +17,21 @@ export default function DrawingToolbar({ drawState, onUpdate }) {
     if (drawState.tool === toolId) {
       drawState.tool = null;
       drawState.enabled = false;
-      drawState.pending = null;
     } else {
       drawState.tool = toolId;
       drawState.enabled = true;
-      drawState.pending = null;
     }
+    // Always reset pending state when switching tools
+    drawState.pending = null;
+    drawState._phase = 0;
+    drawState._dragTarget = null;
     onUpdate();
   };
 
   const undo = () => {
     if (drawState.pending) {
       drawState.pending = null;
+      drawState._phase = 0;
     } else {
       drawState.annotations.pop();
     }
@@ -38,6 +41,7 @@ export default function DrawingToolbar({ drawState, onUpdate }) {
   const clear = () => {
     drawState.annotations = [];
     drawState.pending = null;
+    drawState._phase = 0;
     onUpdate();
   };
 
@@ -79,10 +83,8 @@ export default function DrawingToolbar({ drawState, onUpdate }) {
         )}
       </div>
 
-      {/* Spacer */}
       <div style={{ flex: 1 }} />
 
-      {/* Undo / Clear */}
       {hasAnnotations && (
         <>
           <button className="draw-btn" onClick={undo} title="Undo last">
