@@ -28,8 +28,12 @@ export default function ChartPanel({ title, source, loading, error, chartType, c
   const drawState = useMemo(() => createDrawingState(), [chartData]);
 
   const triggerUpdate = useCallback(() => {
+    // Repaint overlay whenever annotations change (undo, clear, new drawing)
+    if (overlayRef.current && chartRef.current) {
+      renderAnnotations(chartRef.current, drawState, overlayRef.current.getContext('2d'));
+    }
     forceRender(n => n + 1);
-  }, []);
+  }, [drawState]);
 
   // Sync overlay size with chart canvas
   const syncOverlaySize = useCallback(() => {
