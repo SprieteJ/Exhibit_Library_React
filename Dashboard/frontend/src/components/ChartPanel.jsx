@@ -14,7 +14,9 @@ const CDEFAULT = {
 };
 
 const _logoImg = new Image();
-_logoImg.src = '/static/logo.png';
+_logoImg.width = 960;
+_logoImg.height = 108;
+_logoImg.src = '/static/logo.svg';
 
 export default function ChartPanel({ title, source, loading, error, chartType, chartData, chartOptions, summary, children }) {
   const canvasRef = useRef(null);

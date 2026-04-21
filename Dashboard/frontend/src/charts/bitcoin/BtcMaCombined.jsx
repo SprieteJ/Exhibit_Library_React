@@ -2,9 +2,7 @@ import { useRef, useEffect, useState, useCallback, forwardRef, useImperativeHand
 import Chart from 'chart.js/auto';
 import useChartData from '../../hooks/useChartData';
 import exportCombinedPng from '../../utils/exportCombinedPng';
-import { YTICK, XGRID, YGRID, fmtBig, xAxisConfig } from '../constants';
-
-const GRID_LINES = 6; // Both panels use the same number of horizontal gridlines
+import { XTICK, YTICK, XGRID, YGRID, fmtBig } from '../constants';
 
 const CDEFAULT = {
   responsive: true, maintainAspectRatio: false, animation: { duration: 0 },
@@ -16,7 +14,9 @@ const CDEFAULT = {
 };
 
 const _logoImg = new Image();
-_logoImg.src = '/static/logo.png';
+_logoImg.width = 960;
+_logoImg.height = 108;
+_logoImg.src = '/static/logo.svg';
 
 const MiniChart = forwardRef(function MiniChart({ chartData, chartOptions, chartType, height }, ref) {
   const canvasRef = useRef(null);
@@ -52,7 +52,6 @@ export default function BtcMaCombined({ from, to }) {
   const loading = ma.loading || gap.loading;
   const error = ma.error || gap.error;
 
-  const dates = ma.data?.dates || gap.data?.dates || [];
   let maChart = null, gapChart = null, summary = null;
 
   if (ma.data?.dates?.length) {
@@ -95,6 +94,8 @@ export default function BtcMaCombined({ from, to }) {
     setDropOpen(false);
   }, []);
 
+  const xTicksCb = function(val) { const l = this.getLabelForValue(val); return l ? l.slice(0,7) : ''; };
+
   return (
     <div className="main">
       <div className="chart-hdr">
@@ -117,40 +118,9 @@ export default function BtcMaCombined({ from, to }) {
       <div className="chart-area" style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
         <div className={`spinner-wrap${loading ? ' on' : ''}`}><div className="spinner" /></div>
         {error && !loading && (<div className="empty" style={{ display: 'flex' }}><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" /></svg><p>Error: {error.message}</p></div>)}
-
-        {/* Top panel: Price + MAs — log scale, forced grid count */}
-        {maChart && (
-          <MiniChart ref={topRef} height="calc(65% - 4px)" chartData={maChart} chartType="line"
-            chartOptions={{
-              scales: {
-                x: xAxisConfig(dates, { display: false }),
-                y: {
-                  type: 'logarithmic',
-                  ticks: { ...YTICK, count: GRID_LINES, callback: v => '$' + fmtBig(v) },
-                  grid: YGRID,
-                },
-              },
-            }}
-          />
-        )}
-
+        {maChart && <MiniChart ref={topRef} height="calc(65% - 4px)" chartData={maChart} chartType="line" chartOptions={{ scales: { x: { type: 'category', ticks: { ...XTICK, maxRotation: 0, maxTicksLimit: 8, display: false }, grid: XGRID }, y: { type: 'logarithmic', ticks: { ...YTICK, callback: v => '$' + fmtBig(v) }, grid: YGRID } } }} />}
         <div style={{ height: 1, background: 'var(--border)', flexShrink: 0 }} />
-
-        {/* Bottom panel: MA Gap — linear scale, same grid count */}
-        {gapChart && (
-          <MiniChart ref={botRef} height="calc(35% - 5px)" chartData={gapChart} chartType="bar"
-            chartOptions={{
-              scales: {
-                x: xAxisConfig(dates),
-                y: {
-                  ticks: { ...YTICK, count: GRID_LINES, callback: v => v.toFixed(0) + '%' },
-                  grid: YGRID,
-                },
-              },
-              plugins: { legend: { display: false } },
-            }}
-          />
-        )}
+        {gapChart && <MiniChart ref={botRef} height="calc(35% - 5px)" chartData={gapChart} chartType="bar" chartOptions={{ scales: { x: { type: 'category', ticks: { ...XTICK, maxRotation: 0, maxTicksLimit: 8, callback: xTicksCb }, grid: XGRID }, y: { ticks: { ...YTICK, callback: v => v.toFixed(0) + '%' }, grid: YGRID } }, plugins: { legend: { display: false } } }} />}
       </div>
       <div className="chart-src">Source: CoinGecko Pro · price with 50d/200d MA (top) · MA gap % (bottom)</div>
     </div>
