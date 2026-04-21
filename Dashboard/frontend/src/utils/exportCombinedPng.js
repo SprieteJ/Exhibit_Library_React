@@ -1,7 +1,7 @@
 /**
  * Export two stacked Chart.js instances into a single styled PNG.
- * mode = 'raw':    Just the two charts stacked, no decorations.
- * mode = 'branded': Charts + logo + title + source, taller canvas.
+ * mode = 'raw':     Just the two charts stacked.
+ * mode = 'branded': Charts + logo + title + source.
  */
 export default function exportCombinedPng(topChart, botChart, opts = {}) {
   if (!topChart || !botChart) return;
@@ -15,11 +15,11 @@ export default function exportCombinedPng(topChart, botChart, opts = {}) {
 
   const isRaw = mode === 'raw';
   const W = 2400;
-  const H = isRaw ? 1000 : 1200;
+  const H = isRaw ? 1100 : 1300;
   const PAD = 40;
   const CHART_PAD = 16;
-  const HEADER_H = isRaw ? 0 : 72;
-  const FOOTER_H = isRaw ? 0 : 44;
+  const TOP = isRaw ? PAD : 80;
+  const BOTTOM = isRaw ? PAD : 52;
   const GAP = 12;
 
   const EXP_BG = '#FAFAFA';
@@ -27,71 +27,70 @@ export default function exportCombinedPng(topChart, botChart, opts = {}) {
   const EXP_TEXT = '#070B09';
 
   const innerW = W - PAD * 2 - CHART_PAD * 2;
-  const totalChartH = H - (HEADER_H || PAD) - (FOOTER_H || PAD) - CHART_PAD * 2 - GAP;
-  const topH = Math.round(totalChartH * 0.65);
-  const botH = totalChartH - topH;
+  const totalH = H - TOP - BOTTOM - CHART_PAD * 2 - GAP;
+  const topH = Math.round(totalH * 0.65);
+  const botH = totalH - topH;
 
-  function applyTheme(chart) {
-    const saves = {
-      dpr: chart.options.devicePixelRatio,
-      cw: chart.canvas.width, ch: chart.canvas.height,
-      w: chart.canvas.style.width, h: chart.canvas.style.height,
-      scales: {}, legendColor: null, legendSize: null, widths: [],
+  function applyTheme(c) {
+    const s = {
+      dpr: c.options.devicePixelRatio, cw: c.canvas.width, ch: c.canvas.height,
+      w: c.canvas.style.width, h: c.canvas.style.height, scales: {},
+      legendColor: null, legendSize: null, widths: [],
     };
-    for (const [id, scale] of Object.entries(chart.options.scales || {})) {
-      saves.scales[id] = {
-        tickColor: scale.ticks?.color, tickFontSize: scale.ticks?.font?.size,
-        borderColor: scale.border?.color, borderDisplay: scale.border?.display,
-        gridColor: scale.grid?.color, gridDisplay: scale.grid?.display,
-        gridDrawBorder: scale.grid?.drawBorder, titleColor: scale.title?.color,
-        titleFontSize: scale.title?.font?.size,
+    for (const [id, sc] of Object.entries(c.options.scales || {})) {
+      s.scales[id] = {
+        tickColor: sc.ticks?.color, tickFontSize: sc.ticks?.font?.size,
+        borderColor: sc.border?.color, borderDisplay: sc.border?.display,
+        gridColor: sc.grid?.color, gridDisplay: sc.grid?.display,
+        gridDrawBorder: sc.grid?.drawBorder, titleColor: sc.title?.color,
+        titleFontSize: sc.title?.font?.size,
       };
-      if (scale.ticks) { scale.ticks.color = EXP_FRAME; if (!scale.ticks.font) scale.ticks.font = {}; scale.ticks.font.size = 16; }
-      if (!scale.border) scale.border = {};
-      scale.border.color = EXP_FRAME; scale.border.display = true;
-      if (scale.grid) { scale.grid.color = 'rgba(0,0,0,0)'; scale.grid.display = false; scale.grid.drawBorder = true; }
-      if (scale.title) { scale.title.color = EXP_FRAME; if (scale.title.font) scale.title.font.size = 14; }
+      if (sc.ticks) { sc.ticks.color = EXP_FRAME; if (!sc.ticks.font) sc.ticks.font = {}; sc.ticks.font.size = 16; }
+      if (!sc.border) sc.border = {};
+      sc.border.color = EXP_FRAME; sc.border.display = true;
+      if (sc.grid) { sc.grid.color = 'rgba(0,0,0,0)'; sc.grid.display = false; sc.grid.drawBorder = true; }
+      if (sc.title) { sc.title.color = EXP_FRAME; if (sc.title.font) sc.title.font.size = 14; }
     }
-    if (chart.options.plugins?.legend?.labels) {
-      saves.legendColor = chart.options.plugins.legend.labels.color;
-      saves.legendSize = chart.options.plugins.legend.labels.font?.size;
-      chart.options.plugins.legend.labels.color = EXP_TEXT;
-      if (!chart.options.plugins.legend.labels.font) chart.options.plugins.legend.labels.font = {};
-      chart.options.plugins.legend.labels.font.size = 13;
+    if (c.options.plugins?.legend?.labels) {
+      s.legendColor = c.options.plugins.legend.labels.color;
+      s.legendSize = c.options.plugins.legend.labels.font?.size;
+      c.options.plugins.legend.labels.color = EXP_TEXT;
+      if (!c.options.plugins.legend.labels.font) c.options.plugins.legend.labels.font = {};
+      c.options.plugins.legend.labels.font.size = 13;
     }
-    saves.widths = chart.data.datasets.map(d => d.borderWidth);
-    chart.data.datasets.forEach(d => { if (d.borderWidth) d.borderWidth = Math.max(d.borderWidth * 2, 3); });
-    chart.options.devicePixelRatio = 1;
-    return saves;
+    s.widths = c.data.datasets.map(d => d.borderWidth);
+    c.data.datasets.forEach(d => { if (d.borderWidth) d.borderWidth = Math.max(d.borderWidth * 2, 3); });
+    c.options.devicePixelRatio = 1;
+    return s;
   }
 
-  function render(chart, w, h) {
-    chart.canvas.width = w; chart.canvas.height = h;
-    chart.canvas.style.width = w + 'px'; chart.canvas.style.height = h + 'px';
-    chart.resize(w, h); chart.update();
+  function render(c, w, h) {
+    c.canvas.style.width = w + 'px'; c.canvas.style.height = h + 'px';
+    c.canvas.width = w; c.canvas.height = h;
+    c.resize(w, h); c.update('none');
   }
 
-  function restore(chart, saves) {
-    chart.options.devicePixelRatio = saves.dpr || undefined;
-    for (const [id, scale] of Object.entries(chart.options.scales || {})) {
-      const o = saves.scales[id] || {};
-      if (scale.ticks) { scale.ticks.color = o.tickColor; if (scale.ticks.font) scale.ticks.font.size = o.tickFontSize; }
-      if (scale.border) { scale.border.color = o.borderColor; scale.border.display = o.borderDisplay; }
-      if (scale.grid) { scale.grid.color = o.gridColor; scale.grid.display = o.gridDisplay; scale.grid.drawBorder = o.gridDrawBorder; }
-      if (scale.title) { scale.title.color = o.titleColor; if (scale.title.font) scale.title.font.size = o.titleFontSize; }
+  function restore(c, s) {
+    c.options.devicePixelRatio = s.dpr || undefined;
+    for (const [id, sc] of Object.entries(c.options.scales || {})) {
+      const o = s.scales[id] || {};
+      if (sc.ticks) { sc.ticks.color = o.tickColor; if (sc.ticks.font) sc.ticks.font.size = o.tickFontSize; }
+      if (sc.border) { sc.border.color = o.borderColor; sc.border.display = o.borderDisplay; }
+      if (sc.grid) { sc.grid.color = o.gridColor; sc.grid.display = o.gridDisplay; sc.grid.drawBorder = o.gridDrawBorder; }
+      if (sc.title) { sc.title.color = o.titleColor; if (sc.title.font) sc.title.font.size = o.titleFontSize; }
     }
-    if (chart.options.plugins?.legend?.labels) {
-      chart.options.plugins.legend.labels.color = saves.legendColor;
-      if (chart.options.plugins.legend.labels.font) chart.options.plugins.legend.labels.font.size = saves.legendSize;
+    if (c.options.plugins?.legend?.labels) {
+      c.options.plugins.legend.labels.color = s.legendColor;
+      if (c.options.plugins.legend.labels.font) c.options.plugins.legend.labels.font.size = s.legendSize;
     }
-    chart.data.datasets.forEach((d, i) => { d.borderWidth = saves.widths[i]; });
-    chart.canvas.width = saves.cw; chart.canvas.height = saves.ch;
-    chart.canvas.style.width = saves.w; chart.canvas.style.height = saves.h;
-    chart.resize(); chart.update();
+    c.data.datasets.forEach((d, i) => { d.borderWidth = s.widths[i]; });
+    c.canvas.width = s.cw; c.canvas.height = s.ch;
+    c.canvas.style.width = s.w; c.canvas.style.height = s.h;
+    c.resize(); c.update('none');
   }
 
-  const topSaves = applyTheme(topChart);
-  const botSaves = applyTheme(botChart);
+  const topS = applyTheme(topChart);
+  const botS = applyTheme(botChart);
   render(topChart, innerW, topH);
   render(botChart, innerW, botH);
 
@@ -101,32 +100,34 @@ export default function exportCombinedPng(topChart, botChart, opts = {}) {
 
   ctx.fillStyle = EXP_BG; ctx.fillRect(0, 0, W, H);
 
-  const fx = PAD, fy = HEADER_H || PAD;
-  const fw = W - PAD * 2, fh = H - (HEADER_H || PAD) - (FOOTER_H || PAD);
+  // Frame
+  const fx = PAD, fy = TOP, fw = W - PAD * 2, fh = H - TOP - BOTTOM;
   ctx.strokeStyle = EXP_FRAME; ctx.lineWidth = 1.5;
   ctx.strokeRect(fx, fy, fw, fh);
 
+  // Charts
   ctx.drawImage(topChart.canvas, fx + CHART_PAD, fy + CHART_PAD, innerW, topH);
   ctx.drawImage(botChart.canvas, fx + CHART_PAD, fy + CHART_PAD + topH + GAP, innerW, botH);
 
+  // Divider
   const divY = fy + CHART_PAD + topH + GAP / 2;
   ctx.strokeStyle = 'rgba(7,11,9,0.15)'; ctx.lineWidth = 1;
   ctx.beginPath(); ctx.moveTo(fx + 8, divY); ctx.lineTo(fx + fw - 8, divY); ctx.stroke();
 
   if (!isRaw) {
     if (logoImg?.naturalWidth) {
-      const logoH = 42, logoW = (logoH / logoImg.naturalHeight) * logoImg.naturalWidth;
-      try { ctx.drawImage(logoImg, PAD, 14, logoW, logoH); } catch (e) { /* ignore */ }
+      const lh = 42, lw = (lh / logoImg.naturalHeight) * logoImg.naturalWidth;
+      try { ctx.drawImage(logoImg, PAD, 18, lw, lh); } catch (e) { /* skip */ }
     }
     if (title) {
       ctx.fillStyle = EXP_TEXT; ctx.font = '400 24px DM Sans, Helvetica Neue, sans-serif';
-      ctx.textAlign = 'center'; ctx.fillText(title, W / 2, 46); ctx.textAlign = 'left';
+      ctx.textAlign = 'center'; ctx.fillText(title, W / 2, 50); ctx.textAlign = 'left';
     }
     const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
     const now = new Date();
     ctx.fillStyle = 'rgba(7,11,9,0.6)'; ctx.font = '400 14px DM Sans, Helvetica Neue, sans-serif';
     ctx.textAlign = 'right';
-    ctx.fillText('Source: Wintermute    Data as of: ' + now.getDate() + ' ' + months[now.getMonth()] + ' ' + now.getFullYear(), W - PAD, H - 14);
+    ctx.fillText('Source: Wintermute    Data as of: ' + now.getDate() + ' ' + months[now.getMonth()] + ' ' + now.getFullYear(), W - PAD, H - 16);
     ctx.textAlign = 'left';
   }
 
@@ -135,6 +136,6 @@ export default function exportCombinedPng(topChart, botChart, opts = {}) {
   a.download = filename + suffix + '_' + new Date().toISOString().split('T')[0] + '.png';
   a.href = off.toDataURL('image/png'); a.click();
 
-  restore(topChart, topSaves);
-  restore(botChart, botSaves);
+  restore(topChart, topS);
+  restore(botChart, botS);
 }
