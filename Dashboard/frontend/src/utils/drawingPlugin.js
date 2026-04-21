@@ -161,8 +161,12 @@ export function attachDrawingHandlers(canvas, chart, state, onUpdate) {
         if (a.type === 'hline') dragStartVals = { y: a.y };
         else if (a.type === 'trendline') dragStartVals = { x1: a.x1, y1: a.y1, x2: a.x2, y2: a.y2 };
         else if (a.type === 'range') dragStartVals = { y1: a.y1, y2: a.y2 };
+        // Suppress Chart.js events during drag so tooltips don't fight with us
+        chart._savedEvents = chart.options.events;
+        chart.options.events = [];
+        if (chart.options.plugins?.tooltip) chart.options.plugins.tooltip.enabled = false;
         canvas.style.cursor = 'grabbing';
-        chart.draw();
+        chart.update('none');
       }
     }
   }
@@ -247,6 +251,13 @@ export function attachDrawingHandlers(canvas, chart, state, onUpdate) {
     // Finish drag of existing annotation
     if (dragging && dragHit) {
       state._dragTarget = null;
+      // Restore Chart.js events
+      if (chart._savedEvents) {
+        chart.options.events = chart._savedEvents;
+        delete chart._savedEvents;
+      }
+      if (chart.options.plugins?.tooltip) chart.options.plugins.tooltip.enabled = true;
+      chart.update('none');
       downPos = null; dragging = false; dragHit = null; dragStartVals = null;
       canvas.style.cursor = '';
       chart.draw();
@@ -308,17 +319,41 @@ export function attachDrawingHandlers(canvas, chart, state, onUpdate) {
 
   const preventCtx = (e) => { if (state.enabled) e.preventDefault(); };
 
-  canvas.addEventListener('mousedown', handleMouseDown);
+  // During drag, we listen on document so mouse can leave canvas smoothly
+  function startDocListeners() {
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUpDoc);
+  }
+  function stopDocListeners() {
+    document.removeEventListener('mousemove', handleMouseMove);
+    document.removeEventListener('mouseup', handleMouseUpDoc);
+  }
+  function handleMouseUpDoc(e) {
+    handleMouseUp(e);
+    stopDocListeners();
+  }
+
+  // Wrap mousedown to also attach document listeners when dragging starts
+  function handleMouseDownWrap(e) {
+    handleMouseDown(e);
+    // If we started a drag (dragHit set or range pending), listen on document
+    if (dragHit || (state.pending?.type === 'range')) {
+      startDocListeners();
+    }
+  }
+
+  canvas.addEventListener('mousedown', handleMouseDownWrap);
   canvas.addEventListener('mousemove', handleMouseMove);
   canvas.addEventListener('mouseup', handleMouseUp);
   canvas.addEventListener('contextmenu', preventCtx);
   document.addEventListener('keydown', handleKeyDown);
 
   return () => {
-    canvas.removeEventListener('mousedown', handleMouseDown);
+    canvas.removeEventListener('mousedown', handleMouseDownWrap);
     canvas.removeEventListener('mousemove', handleMouseMove);
     canvas.removeEventListener('mouseup', handleMouseUp);
     canvas.removeEventListener('contextmenu', preventCtx);
     document.removeEventListener('keydown', handleKeyDown);
+    stopDocListeners();
   };
 }
