@@ -1,6 +1,6 @@
 import useChartData from '../../hooks/useChartData';
 import ChartPanel from '../../components/ChartPanel';
-import { XTICK, YTICK, XGRID, YGRID } from '../constants';
+import { XTICK, YTICK, XGRID, YGRID , xAxisConfig } from '../constants';
 
 const QUAD_COLORS = { Leading: '#00D64A', Improving: '#2471CC', Lagging: '#EC5B5B', Weakening: '#FFB800' };
 

@@ -1,6 +1,6 @@
 import useChartData from '../../hooks/useChartData';
 import ChartPanel from '../../components/ChartPanel';
-import { XTICK, YTICK, XGRID, YGRID } from '../constants';
+import { XTICK, YTICK, XGRID, YGRID , xAxisConfig } from '../constants';
 
 export default function AltBtcRatio({ from, to }) {
   const url = `/api/btc-alt-ratio?from=${from}&to=${to}`;
@@ -12,5 +12,5 @@ export default function AltBtcRatio({ from, to }) {
     if (last) summary = <div className="perf-item"><span style={{ color: '#F7931A', fontWeight: 600 }}>Ratio</span> {last.toFixed(2)}x</div>;
   }
   return <ChartPanel title="BTC / Altcoin Market Cap Ratio" source="Source: CoinGecko Pro · rising = BTC dominance" loading={loading} error={error} chartType="line" chartData={chartData}
-    chartOptions={{ scales: { x: { type: 'category', ticks: { ...XTICK, maxRotation: 0, maxTicksLimit: 8, callback(val) { const l = this.getLabelForValue(val); return l ? l.slice(0,7) : ''; } }, grid: XGRID }, y: { ticks: YTICK, grid: YGRID } }, plugins: { legend: { display: false } } }} summary={summary} />;
+    chartOptions={{ scales: { x: xAxisConfig(data.dates), y: { ticks: YTICK, grid: YGRID } }, plugins: { legend: { display: false } } }} summary={summary} />;
 }

@@ -1,6 +1,6 @@
 import useChartData from '../../hooks/useChartData';
 import ChartPanel from '../../components/ChartPanel';
-import { XTICK, YTICK, XGRID, YGRID } from '../constants';
+import { XTICK, YTICK, XGRID, YGRID , xAxisConfig } from '../constants';
 
 export default function AltAltseason({ from, to, window: win }) {
   const url = `/api/alt-altseason?from=${from}&to=${to}&window=${win || '90'}&topn=50`;
@@ -15,5 +15,5 @@ export default function AltAltseason({ from, to, window: win }) {
     if (last != null) summary = <div className="perf-item"><span style={{ color: last > 50 ? '#00D64A' : '#EC5B5B', fontWeight: 600 }}>{last > 50 ? 'Altseason' : 'BTC Season'}</span> {last.toFixed(0)}% beating BTC</div>;
   }
   return <ChartPanel title={`Altseason Indicator (${win || 90}d)`} source="Source: CoinGecko Pro · top 50 alts ex-stables" loading={loading} error={error} chartType="line" chartData={chartData}
-    chartOptions={{ scales: { x: { type: 'category', ticks: { ...XTICK, maxRotation: 0, maxTicksLimit: 8, callback(val) { const l = this.getLabelForValue(val); return l ? l.slice(0,7) : ''; } }, grid: XGRID }, y: { position: 'left', min: 0, max: 100, ticks: { ...YTICK, callback: v => v + '%' }, grid: YGRID }, y1: { position: 'right', ticks: { ...YTICK, callback: v => v?.toFixed(0) + '%' }, grid: { display: false } } }, plugins: { legend: { display: true, labels: { color: '#888', font: { size: 11 }, boxWidth: 12 } } } }} summary={summary} />;
+    chartOptions={{ scales: { x: xAxisConfig(data.dates), y: { position: 'left', min: 0, max: 100, ticks: { ...YTICK, callback: v => v + '%' }, grid: YGRID }, y1: { position: 'right', ticks: { ...YTICK, callback: v => v?.toFixed(0) + '%' }, grid: { display: false } } }, plugins: { legend: { display: true, labels: { color: '#888', font: { size: 11 }, boxWidth: 12 } } } }} summary={summary} />;
 }

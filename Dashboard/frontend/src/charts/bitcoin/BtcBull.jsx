@@ -1,6 +1,6 @@
 import useChartData from '../../hooks/useChartData';
 import ChartPanel from '../../components/ChartPanel';
-import { PAL, XTICK, YTICK, XGRID, YGRID } from '../constants';
+import { PAL, XTICK, YTICK, XGRID, YGRID , xAxisConfig } from '../constants';
 
 export default function BtcBull() {
   const url = '/api/btc-bull?days=1000';

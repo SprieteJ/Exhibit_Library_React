@@ -1,6 +1,6 @@
 import useChartData from '../../hooks/useChartData';
 import ChartPanel from '../../components/ChartPanel';
-import { MACRO_COLORS, PAL, XTICK, YTICK, XGRID, YGRID } from '../constants';
+import { MACRO_COLORS, PAL, XTICK, YTICK, XGRID, YGRID , xAxisConfig } from '../constants';
 
 const SYMBOLS = 'BTC,ETH,SPY,QQQ,GLD,TLT,BNO';
 
@@ -47,7 +47,7 @@ export default function MacroPrice({ from, to }) {
       chartType="line" chartData={chartData}
       chartOptions={{
         scales: {
-          x: { type: 'category', ticks: { ...XTICK, maxRotation: 0, maxTicksLimit: 8, callback(val) { const l = this.getLabelForValue(val); return l ? l.slice(0, 7) : ''; } }, grid: XGRID },
+          x: xAxisConfig(dates),
           y: { ticks: { ...YTICK }, grid: YGRID },
         },
         plugins: { legend: { display: true, labels: { color: '#888', font: { size: 11 }, boxWidth: 12 } } },

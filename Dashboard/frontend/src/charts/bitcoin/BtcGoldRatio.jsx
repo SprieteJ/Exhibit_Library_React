@@ -1,6 +1,6 @@
 import useChartData from '../../hooks/useChartData';
 import ChartPanel from '../../components/ChartPanel';
-import { XTICK, YTICK, XGRID, YGRID } from '../constants';
+import { XTICK, YTICK, XGRID, YGRID , xAxisConfig } from '../constants';
 
 export default function BtcGoldRatio({ from, to }) {
   const url = `/api/btc-gold-ratio?from=${from}&to=${to}`;
@@ -30,7 +30,7 @@ export default function BtcGoldRatio({ from, to }) {
       chartType="line" chartData={chartData}
       chartOptions={{
         scales: {
-          x: { type: 'category', ticks: { ...XTICK, maxRotation: 0, maxTicksLimit: 8, callback(val) { const l = this.getLabelForValue(val); return l ? l.slice(0, 7) : ''; } }, grid: XGRID },
+          x: xAxisConfig(data.dates),
           y: { ticks: YTICK, grid: YGRID },
         },
         plugins: { legend: { display: false } },

@@ -1,6 +1,6 @@
 import useChartData from '../../hooks/useChartData';
 import ChartPanel from '../../components/ChartPanel';
-import { XTICK, YTICK, XGRID, YGRID, fmtBig } from '../constants';
+import { XTICK, YTICK, XGRID, YGRID, fmtBig , xAxisConfig } from '../constants';
 
 export default function AnaBubble({ from, to, window: win }) {
   const url = `/api/sector-bubble?to=${to}&window=${win || '30'}`;

@@ -1,6 +1,6 @@
 import useChartData from '../../hooks/useChartData';
 import ChartPanel from '../../components/ChartPanel';
-import { MACRO_COLORS, PAL, XTICK, YTICK, XGRID, YGRID } from '../constants';
+import { MACRO_COLORS, PAL, XTICK, YTICK, XGRID, YGRID , xAxisConfig } from '../constants';
 
 const WIN_LABELS = { '30': '1M', '90': '3M', '180': '6M', '365': '1Y', '730': '2Y', '1460': '4Y' };
 
@@ -50,8 +50,7 @@ export default function MacroSharpe({ from, to, window: win }) {
       chartType="line" chartData={chartData}
       chartOptions={{
         scales: {
-          x: { type: 'category', ticks: { ...XTICK, maxRotation: 0, maxTicksLimit: 8,
-            callback: function(val) { const l = this.getLabelForValue(val); return l ? l.slice(0, 7) : ''; } }, grid: XGRID },
+          x: xAxisConfig(dates),
           y: { ticks: { ...YTICK, callback: v => v.toFixed(1) }, grid: YGRID },
         },
         plugins: { legend: { display: true, labels: { color: '#888', font: { size: 11 }, boxWidth: 12 } } },

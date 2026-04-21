@@ -1,6 +1,6 @@
 import useChartData from '../../hooks/useChartData';
 import ChartPanel from '../../components/ChartPanel';
-import { PAL, XTICK, YTICK, XGRID, YGRID } from '../constants';
+import { PAL, XTICK, YTICK, XGRID, YGRID , xAxisConfig } from '../constants';
 
 /**
  * Generic multi-sector line chart. Used by most Baskets charts.
@@ -44,7 +44,7 @@ export default function SectorLineChart({ url, title, source, yFormat, yMin, yMa
       chartType="line" chartData={chartData}
       chartOptions={{
         scales: {
-          x: { type: 'category', ticks: { ...XTICK, maxRotation: 0, maxTicksLimit: 8, callback(val) { const l = this.getLabelForValue(val); return l ? l.slice(0, 7) : ''; } }, grid: XGRID },
+          x: xAxisConfig(dates),
           y: { ...(yMin != null ? { min: yMin } : {}), ...(yMax != null ? { max: yMax } : {}), ticks: { ...YTICK, callback: v => yFormat === '%' ? v.toFixed(0) + '%' : yFormat === 'corr' ? v.toFixed(1) : v.toFixed(0) }, grid: YGRID },
         },
         plugins: { legend: { display: true, labels: { color: '#888', font: { size: 10 }, boxWidth: 10 } } },

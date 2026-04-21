@@ -1,6 +1,6 @@
 import useChartData from '../../hooks/useChartData';
 import ChartPanel from '../../components/ChartPanel';
-import { XTICK, YTICK, XGRID, YGRID } from '../constants';
+import { XTICK, YTICK, XGRID, YGRID , xAxisConfig } from '../constants';
 
 export default function SecSharpe({ from, to, window: win }) {
   const url = `/api/sector-sharpe?to=${to}&window=${win || '30'}`;

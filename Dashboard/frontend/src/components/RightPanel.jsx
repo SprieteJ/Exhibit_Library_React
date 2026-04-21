@@ -1,6 +1,7 @@
 const PRESETS = [
   { label: '1M', months: 1 }, { label: '3M', months: 3 }, { label: '6M', months: 6 },
-  { label: '1Y', months: 12 }, { label: '2Y', months: 24 }, { label: 'ALL', months: null },
+  { label: '1Y', months: 12 }, { label: '2Y', months: 24 }, { label: '3Y', months: 36 },
+  { label: 'ALL', months: null },
 ];
 const WIN_PRESETS = [
   { label: '1M', value: '30' }, { label: '3M', value: '90' }, { label: '6M', value: '180' },

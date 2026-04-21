@@ -1,6 +1,6 @@
 import useChartData from '../../hooks/useChartData';
 import ChartPanel from '../../components/ChartPanel';
-import { XTICK, YTICK, XGRID, YGRID } from '../constants';
+import { XTICK, YTICK, XGRID, YGRID , xAxisConfig } from '../constants';
 
 export default function BtcFundingDelta({ from, to, window: win }) {
   const url = `/api/btc-funding-delta?from=${from}&to=${to}&window=${win || '30'}`;
@@ -26,7 +26,7 @@ export default function BtcFundingDelta({ from, to, window: win }) {
       chartType="line" chartData={chartData}
       chartOptions={{
         scales: {
-          x: { type: 'category', ticks: { ...XTICK, maxRotation: 0, maxTicksLimit: 8, callback(val) { const l = this.getLabelForValue(val); return l ? l.slice(0, 7) : ''; } }, grid: XGRID },
+          x: xAxisConfig(data.dates),
           y:  { position: 'left',  ticks: { ...YTICK, callback: v => v.toFixed(0) + ' bps' }, grid: YGRID, title: { display: true, text: 'Funding Δ', color: '#888', font: { size: 11 } } },
           y1: { position: 'right', ticks: { ...YTICK, callback: v => v.toFixed(0) + '%' }, grid: { display: false }, title: { display: true, text: 'Price Δ', color: '#888', font: { size: 11 } } },
         },

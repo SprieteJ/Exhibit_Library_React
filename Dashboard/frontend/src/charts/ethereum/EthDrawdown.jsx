@@ -1,6 +1,6 @@
 import useChartData from '../../hooks/useChartData';
 import ChartPanel from '../../components/ChartPanel';
-import { XTICK, YTICK, XGRID, YGRID } from '../constants';
+import { XTICK, YTICK, XGRID, YGRID , xAxisConfig } from '../constants';
 
 export default function EthDrawdown({ from, to }) {
   const url = `/api/eth-drawdown?from=${from}&to=${to}`;
@@ -34,7 +34,7 @@ export default function EthDrawdown({ from, to }) {
       loading={loading} error={error} chartType="line" chartData={chartData}
       chartOptions={{
         scales: {
-          x: { type: 'category', ticks: { ...XTICK, maxRotation: 0, maxTicksLimit: 8, callback(val) { const l = this.getLabelForValue(val); return l ? l.slice(0, 7) : ''; } }, grid: XGRID },
+          x: xAxisConfig(data.dates),
           y: { max: 0, ticks: { ...YTICK, callback: v => v.toFixed(0) + '%' }, grid: YGRID },
         },
         plugins: { legend: { display: false } },

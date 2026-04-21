@@ -1,6 +1,6 @@
 import useChartData from '../../hooks/useChartData';
 import ChartPanel from '../../components/ChartPanel';
-import { XTICK, YTICK, XGRID, YGRID } from '../constants';
+import { XTICK, YTICK, XGRID, YGRID , xAxisConfig } from '../constants';
 
 export default function AltMcapGap({ from, to }) {
   const url = `/api/alt-mcap-gap?from=${from}&to=${to}`;
@@ -13,5 +13,5 @@ export default function AltMcapGap({ from, to }) {
     if (last != null) summary = <div className="perf-item"><span style={{ color: last >= 0 ? '#00D64A' : '#EC5B5B', fontWeight: 600 }}>{last >= 0 ? 'Golden' : 'Death'} Cross</span> <span className={last >= 0 ? 'pos' : 'neg'}>{last >= 0 ? '+' : ''}{last.toFixed(1)}%</span></div>;
   }
   return <ChartPanel title="Altcoin Mcap 50d / 200d MA Gap" source="Source: CoinGecko Pro" loading={loading} error={error} chartType="bar" chartData={chartData}
-    chartOptions={{ scales: { x: { type: 'category', ticks: { ...XTICK, maxRotation: 0, maxTicksLimit: 8, callback(val) { const l = this.getLabelForValue(val); return l ? l.slice(0,7) : ''; } }, grid: XGRID }, y: { ticks: { ...YTICK, callback: v => v.toFixed(0) + '%' }, grid: YGRID } }, plugins: { legend: { display: false } } }} summary={summary} />;
+    chartOptions={{ scales: { x: xAxisConfig(data.dates), y: { ticks: { ...YTICK, callback: v => v.toFixed(0) + '%' }, grid: YGRID } }, plugins: { legend: { display: false } } }} summary={summary} />;
 }

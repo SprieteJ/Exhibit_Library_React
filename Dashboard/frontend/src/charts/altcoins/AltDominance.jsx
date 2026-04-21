@@ -1,6 +1,6 @@
 import useChartData from '../../hooks/useChartData';
 import ChartPanel from '../../components/ChartPanel';
-import { XTICK, YTICK, XGRID, YGRID } from '../constants';
+import { XTICK, YTICK, XGRID, YGRID , xAxisConfig } from '../constants';
 
 export default function AltDominance({ from, to }) {
   const url = `/api/dominance-shares?from=${from}&to=${to}`;
@@ -22,5 +22,5 @@ export default function AltDominance({ from, to }) {
     </>);
   }
   return <ChartPanel title="Dominance Shares" source="Source: CoinGecko Pro" loading={loading} error={error} chartType="line" chartData={chartData}
-    chartOptions={{ scales: { x: { type: 'category', ticks: { ...XTICK, maxRotation: 0, maxTicksLimit: 8, callback(val) { const l = this.getLabelForValue(val); return l ? l.slice(0,7) : ''; } }, grid: XGRID }, y: { stacked: true, max: 100, ticks: { ...YTICK, callback: v => v + '%' }, grid: YGRID } }, plugins: { legend: { display: true, labels: { color: '#888', font: { size: 11 }, boxWidth: 12 } } } }} summary={summary} />;
+    chartOptions={{ scales: { x: xAxisConfig(data.dates), y: { stacked: true, max: 100, ticks: { ...YTICK, callback: v => v + '%' }, grid: YGRID } }, plugins: { legend: { display: true, labels: { color: '#888', font: { size: 11 }, boxWidth: 12 } } } }} summary={summary} />;
 }

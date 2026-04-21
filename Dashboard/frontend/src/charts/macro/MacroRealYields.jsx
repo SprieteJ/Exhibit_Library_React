@@ -1,6 +1,6 @@
 import useChartData from '../../hooks/useChartData';
 import ChartPanel from '../../components/ChartPanel';
-import { XTICK, YTICK, XGRID, YGRID } from '../constants';
+import { XTICK, YTICK, XGRID, YGRID , xAxisConfig } from '../constants';
 
 export default function MacroRealYields({ from, to }) {
   const url = `/api/macro-real-yields?from=${from}&to=${to}`;
@@ -36,7 +36,7 @@ export default function MacroRealYields({ from, to }) {
       chartType="line" chartData={chartData}
       chartOptions={{
         scales: {
-          x: { type: 'category', ticks: { ...XTICK, maxRotation: 0, maxTicksLimit: 8, callback(val) { const l = this.getLabelForValue(val); return l ? l.slice(0, 7) : ''; } }, grid: XGRID },
+          x: xAxisConfig(data.dates),
           y:  { position: 'left',  ticks: { ...YTICK, callback: v => v.toFixed(1) + '%' }, grid: YGRID, title: { display: true, text: 'Yield %', color: '#888', font: { size: 11 } } },
           y1: { position: 'right', ticks: { ...YTICK, callback: v => '$' + (v >= 1000 ? (v/1000).toFixed(0) + 'k' : v) }, grid: { display: false } },
         },

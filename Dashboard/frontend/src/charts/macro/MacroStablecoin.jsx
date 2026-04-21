@@ -1,6 +1,6 @@
 import useChartData from '../../hooks/useChartData';
 import ChartPanel from '../../components/ChartPanel';
-import { XTICK, YTICK, XGRID, YGRID, fmtBig } from '../constants';
+import { XTICK, YTICK, XGRID, YGRID, fmtBig , xAxisConfig } from '../constants';
 
 export default function MacroStablecoin({ from, to }) {
   const url = `/api/macro-stablecoin?from=${from}&to=${to}`;
@@ -39,7 +39,7 @@ export default function MacroStablecoin({ from, to }) {
       chartType="line" chartData={chartData}
       chartOptions={{
         scales: {
-          x: { type: 'category', ticks: { ...XTICK, maxRotation: 0, maxTicksLimit: 8, callback(val) { const l = this.getLabelForValue(val); return l ? l.slice(0, 7) : ''; } }, grid: XGRID },
+          x: xAxisConfig(data.dates),
           y: { ticks: { ...YTICK, callback: v => '$' + fmtBig(v) }, grid: YGRID },
         },
         plugins: { legend: { display: false } },

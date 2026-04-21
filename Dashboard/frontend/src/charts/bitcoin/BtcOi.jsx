@@ -1,6 +1,6 @@
 import useChartData from '../../hooks/useChartData';
 import ChartPanel from '../../components/ChartPanel';
-import { XTICK, YTICK, XGRID, YGRID, fmtBig } from '../constants';
+import { XTICK, YTICK, XGRID, YGRID, fmtBig , xAxisConfig } from '../constants';
 
 export default function BtcOi({ from, to }) {
   const url = `/api/btc-oi?from=${from}&to=${to}`;
@@ -29,7 +29,7 @@ export default function BtcOi({ from, to }) {
       chartType="line" chartData={chartData}
       chartOptions={{
         scales: {
-          x: { type: 'category', ticks: { ...XTICK, maxRotation: 0, maxTicksLimit: 8, callback(val) { const l = this.getLabelForValue(val); return l ? l.slice(0, 7) : ''; } }, grid: XGRID },
+          x: xAxisConfig(data.dates),
           y:  { position: 'left',  ticks: { ...YTICK, callback: v => '$' + fmtBig(v) }, grid: YGRID },
           y1: { position: 'right', ticks: { ...YTICK, callback: v => '$' + fmtBig(v) }, grid: { display: false } },
         },

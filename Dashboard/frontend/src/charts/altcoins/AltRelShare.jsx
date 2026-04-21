@@ -1,6 +1,6 @@
 import useChartData from '../../hooks/useChartData';
 import ChartPanel from '../../components/ChartPanel';
-import { XTICK, YTICK, XGRID, YGRID } from '../constants';
+import { XTICK, YTICK, XGRID, YGRID , xAxisConfig } from '../constants';
 
 export default function AltRelShare({ from, to }) {
   const url = `/api/alt-rel-share?from=${from}&to=${to}`;
@@ -14,5 +14,5 @@ export default function AltRelShare({ from, to }) {
     ]};
   }
   return <ChartPanel title="Altcoin Relative Share" source="Source: CoinGecko Pro" loading={loading} error={error} chartType="line" chartData={chartData}
-    chartOptions={{ scales: { x: { type: 'category', ticks: { ...XTICK, maxRotation: 0, maxTicksLimit: 8, callback(val) { const l = this.getLabelForValue(val); return l ? l.slice(0,7) : ''; } }, grid: XGRID }, y: { position: 'left', ticks: { ...YTICK, callback: v => v.toFixed(0) + '%' }, grid: YGRID, title: { display: true, text: 'vs Total %', color: '#888', font: { size: 11 } } }, y1: { position: 'right', ticks: { ...YTICK, callback: v => v.toFixed(0) + '%' }, grid: { display: false } } }, plugins: { legend: { display: true, labels: { color: '#888', font: { size: 11 }, boxWidth: 12 } } } }} />;
+    chartOptions={{ scales: { x: xAxisConfig(data.dates), y: { position: 'left', ticks: { ...YTICK, callback: v => v.toFixed(0) + '%' }, grid: YGRID, title: { display: true, text: 'vs Total %', color: '#888', font: { size: 11 } } }, y1: { position: 'right', ticks: { ...YTICK, callback: v => v.toFixed(0) + '%' }, grid: { display: false } } }, plugins: { legend: { display: true, labels: { color: '#888', font: { size: 11 }, boxWidth: 12 } } } }} />;
 }

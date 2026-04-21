@@ -1,6 +1,6 @@
 import useChartData from '../../hooks/useChartData';
 import ChartPanel from '../../components/ChartPanel';
-import { XTICK, YTICK, XGRID, YGRID, fmtBig } from '../constants';
+import { XTICK, YTICK, XGRID, YGRID, fmtBig , xAxisConfig } from '../constants';
 
 export default function CmTotalMcap({ from, to }) {
   const url = `/api/total-mcap?from=${from}&to=${to}`;
@@ -16,5 +16,5 @@ export default function CmTotalMcap({ from, to }) {
     if (last) summary = <div className="perf-item"><span style={{ color: '#00D64A', fontWeight: 600 }}>Total Crypto</span> ${fmtBig(last)}</div>;
   }
   return <ChartPanel title="Total Crypto Market Cap" source="Source: CoinGecko Pro" loading={loading} error={error} chartType="line" chartData={chartData}
-    chartOptions={{ scales: { x: { type: 'category', ticks: { ...XTICK, maxRotation: 0, maxTicksLimit: 8, callback(val) { const l = this.getLabelForValue(val); return l ? l.slice(0,7) : ''; } }, grid: XGRID }, y: { ticks: { ...YTICK, callback: v => '$' + fmtBig(v) }, grid: YGRID } }, plugins: { legend: { display: true, labels: { color: '#888', font: { size: 11 }, boxWidth: 12 } } } }} summary={summary} />;
+    chartOptions={{ scales: { x: xAxisConfig(data.dates), y: { ticks: { ...YTICK, callback: v => '$' + fmtBig(v) }, grid: YGRID } }, plugins: { legend: { display: true, labels: { color: '#888', font: { size: 11 }, boxWidth: 12 } } } }} summary={summary} />;
 }

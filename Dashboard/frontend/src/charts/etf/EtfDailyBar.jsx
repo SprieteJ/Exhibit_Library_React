@@ -1,6 +1,6 @@
 import useChartData from '../../hooks/useChartData';
 import ChartPanel from '../../components/ChartPanel';
-import { XTICK, YTICK, XGRID, YGRID } from '../constants';
+import { XTICK, YTICK, XGRID, YGRID , xAxisConfig } from '../constants';
 
 export default function EtfDailyBar({ from, to }) {
   const url = `/api/etf-flows?from=${from}&to=${to}&window=1`;
@@ -20,5 +20,5 @@ export default function EtfDailyBar({ from, to }) {
     if (datasets.length) chartData = { labels: dates, datasets };
   }
   return <ChartPanel title="Daily Spot ETF Flows" source="Source: Farside Investors" loading={loading} error={error} chartType="bar" chartData={chartData}
-    chartOptions={{ scales: { x: { type: 'category', stacked: true, ticks: { ...XTICK, maxRotation: 0, maxTicksLimit: 8, callback(val) { const l = this.getLabelForValue(val); return l ? l.slice(0,7) : ''; } }, grid: XGRID }, y: { stacked: true, ticks: { ...YTICK, callback: v => '$' + v.toFixed(0) + 'M' }, grid: YGRID } }, plugins: { legend: { display: true, labels: { color: '#888', font: { size: 11 }, boxWidth: 12 } } } }} />;
+    chartOptions={{ scales: { x: { ...xAxisConfig(dates), stacked: true }, y: { stacked: true, ticks: { ...YTICK, callback: v => '$' + v.toFixed(0) + 'M' }, grid: YGRID } }, plugins: { legend: { display: true, labels: { color: '#888', font: { size: 11 }, boxWidth: 12 } } } }} />;
 }

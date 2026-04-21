@@ -1,6 +1,6 @@
 import useChartData from '../../hooks/useChartData';
 import ChartPanel from '../../components/ChartPanel';
-import { PAL, XTICK, YTICK, XGRID, YGRID } from '../constants';
+import { PAL, XTICK, YTICK, XGRID, YGRID , xAxisConfig } from '../constants';
 
 const TIERS = ['top10', 'top25', 'top50', 'top100', 'top250'];
 const TIER_LABELS = { top10: 'Top 10', top25: 'Top 25', top50: 'Top 50', top100: 'Top 100', top250: 'Top 250' };
@@ -15,5 +15,5 @@ export default function AltIntracorr({ from, to }) {
     }))};
   }
   return <ChartPanel title="Altcoin Intracorrelation" source="Source: CoinGecko Pro · precomputed 30d pairwise avg" loading={loading} error={error} chartType="line" chartData={chartData}
-    chartOptions={{ scales: { x: { type: 'category', ticks: { ...XTICK, maxRotation: 0, maxTicksLimit: 8, callback(val) { const l = this.getLabelForValue(val); return l ? l.slice(0,7) : ''; } }, grid: XGRID }, y: { min: 0, max: 1, ticks: { ...YTICK, callback: v => v.toFixed(1) }, grid: YGRID } }, plugins: { legend: { display: true, labels: { color: '#888', font: { size: 11 }, boxWidth: 12 } } } }} />;
+    chartOptions={{ scales: { x: xAxisConfig(data.dates), y: { min: 0, max: 1, ticks: { ...YTICK, callback: v => v.toFixed(1) }, grid: YGRID } }, plugins: { legend: { display: true, labels: { color: '#888', font: { size: 11 }, boxWidth: 12 } } } }} />;
 }

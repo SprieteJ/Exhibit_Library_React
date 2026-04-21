@@ -1,6 +1,6 @@
 import useChartData from '../../hooks/useChartData';
 import ChartPanel from '../../components/ChartPanel';
-import { XTICK, YTICK, XGRID, YGRID, fmtBig } from '../constants';
+import { XTICK, YTICK, XGRID, YGRID, fmtBig , xAxisConfig } from '../constants';
 
 export default function BtcGold({ from, to }) {
   const url = `/api/btc-gold?from=${from}&to=${to}`;
@@ -26,7 +26,7 @@ export default function BtcGold({ from, to }) {
       chartType="line" chartData={chartData}
       chartOptions={{
         scales: {
-          x: { type: 'category', ticks: { ...XTICK, maxRotation: 0, maxTicksLimit: 8, callback(val) { const l = this.getLabelForValue(val); return l ? l.slice(0, 7) : ''; } }, grid: XGRID },
+          x: xAxisConfig(data.dates),
           y:  { position: 'left',  ticks: { ...YTICK, callback: v => '$' + fmtBig(v) }, grid: YGRID, title: { display: true, text: 'BTC', color: '#888', font: { size: 11 } } },
           y1: { position: 'right', ticks: { ...YTICK, callback: v => '$' + v.toFixed(0) }, grid: { display: false }, title: { display: true, text: 'GLD', color: '#888', font: { size: 11 } } },
         },
