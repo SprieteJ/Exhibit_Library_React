@@ -1,7 +1,6 @@
 /**
  * Export two stacked Chart.js instances into a single styled PNG.
- * mode = 'raw':     Just the two charts stacked.
- * mode = 'branded': Charts + logo + title + source.
+ * Hidden (legend-toggled) datasets are excluded from export.
  */
 export default function exportCombinedPng(topChart, botChart, opts = {}) {
   if (!topChart || !botChart) return;
@@ -35,7 +34,7 @@ export default function exportCombinedPng(topChart, botChart, opts = {}) {
     const s = {
       dpr: c.options.devicePixelRatio, cw: c.canvas.width, ch: c.canvas.height,
       w: c.canvas.style.width, h: c.canvas.style.height, scales: {},
-      legendColor: null, legendSize: null, widths: [],
+      legendColor: null, legendSize: null, widths: [], hiddenStates: [], origDatasets: null,
     };
     for (const [id, sc] of Object.entries(c.options.scales || {})) {
       s.scales[id] = {
@@ -58,7 +57,12 @@ export default function exportCombinedPng(topChart, botChart, opts = {}) {
       if (!c.options.plugins.legend.labels.font) c.options.plugins.legend.labels.font = {};
       c.options.plugins.legend.labels.font.size = 13;
     }
+    // Save and filter hidden datasets
+    s.origDatasets = c.data.datasets;
+    s.hiddenStates = c.data.datasets.map(d => d.hidden);
     s.widths = c.data.datasets.map(d => d.borderWidth);
+    const visibleMask = c.data.datasets.map((_, i) => c.isDatasetVisible(i));
+    c.data.datasets = c.data.datasets.filter((_, i) => visibleMask[i]);
     c.data.datasets.forEach(d => { if (d.borderWidth) d.borderWidth = Math.max(d.borderWidth * 2, 3); });
     c.options.devicePixelRatio = 1;
     return s;
@@ -71,6 +75,9 @@ export default function exportCombinedPng(topChart, botChart, opts = {}) {
   }
 
   function restore(c, s) {
+    // Restore original datasets
+    c.data.datasets = s.origDatasets;
+    s.origDatasets.forEach((d, i) => { d.hidden = s.hiddenStates[i]; d.borderWidth = s.widths[i]; });
     c.options.devicePixelRatio = s.dpr || undefined;
     for (const [id, sc] of Object.entries(c.options.scales || {})) {
       const o = s.scales[id] || {};
@@ -83,7 +90,6 @@ export default function exportCombinedPng(topChart, botChart, opts = {}) {
       c.options.plugins.legend.labels.color = s.legendColor;
       if (c.options.plugins.legend.labels.font) c.options.plugins.legend.labels.font.size = s.legendSize;
     }
-    c.data.datasets.forEach((d, i) => { d.borderWidth = s.widths[i]; });
     c.canvas.width = s.cw; c.canvas.height = s.ch;
     c.canvas.style.width = s.w; c.canvas.style.height = s.h;
     c.resize(); c.update('none');
@@ -100,16 +106,13 @@ export default function exportCombinedPng(topChart, botChart, opts = {}) {
 
   ctx.fillStyle = EXP_BG; ctx.fillRect(0, 0, W, H);
 
-  // Frame
   const fx = PAD, fy = TOP, fw = W - PAD * 2, fh = H - TOP - BOTTOM;
   ctx.strokeStyle = EXP_FRAME; ctx.lineWidth = 1.5;
   ctx.strokeRect(fx, fy, fw, fh);
 
-  // Charts
   ctx.drawImage(topChart.canvas, fx + CHART_PAD, fy + CHART_PAD, innerW, topH);
   ctx.drawImage(botChart.canvas, fx + CHART_PAD, fy + CHART_PAD + topH + GAP, innerW, botH);
 
-  // Divider
   const divY = fy + CHART_PAD + topH + GAP / 2;
   ctx.strokeStyle = 'rgba(7,11,9,0.15)'; ctx.lineWidth = 1;
   ctx.beginPath(); ctx.moveTo(fx + 8, divY); ctx.lineTo(fx + fw - 8, divY); ctx.stroke();

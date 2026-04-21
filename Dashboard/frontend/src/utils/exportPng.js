@@ -2,6 +2,9 @@
  * Export a Chart.js instance to a styled PNG.
  * mode = 'raw':     Just the chart, no decorations.
  * mode = 'branded': Chart + logo + title + source footer.
+ *
+ * Hidden (legend-toggled) datasets are excluded from the export entirely,
+ * and visible datasets are re-centered.
  */
 export default function exportPng(chart, opts = {}) {
   if (!chart) return;
@@ -18,7 +21,6 @@ export default function exportPng(chart, opts = {}) {
   const H = isRaw ? 1000 : 1200;
   const PAD = 40;
   const CHART_PAD = 16;
-  // Raw: small top/bottom margin. Branded: room for logo+title and source.
   const TOP = isRaw ? PAD : 80;
   const BOTTOM = isRaw ? PAD : 52;
 
@@ -35,6 +37,7 @@ export default function exportPng(chart, opts = {}) {
     w: chart.canvas.style.width, h: chart.canvas.style.height,
     cw: chart.canvas.width, ch: chart.canvas.height,
     scales: {}, legendColor: null, legendSize: null, widths: [],
+    hiddenStates: [],
   };
   for (const [id, scale] of Object.entries(chart.options.scales || {})) {
     save.scales[id] = {
@@ -51,6 +54,15 @@ export default function exportPng(chart, opts = {}) {
   }
   save.widths = chart.data.datasets.map(d => d.borderWidth);
 
+  // ── Record which datasets are hidden, then remove them for export ──
+  const origDatasets = chart.data.datasets;
+  const visibleMask = origDatasets.map((_, i) => chart.isDatasetVisible(i));
+  save.hiddenStates = origDatasets.map(d => d.hidden);
+
+  // Replace datasets with only visible ones
+  const visibleDatasets = origDatasets.filter((_, i) => visibleMask[i]);
+  chart.data.datasets = visibleDatasets;
+
   // ── Apply export theme ──
   for (const [, scale] of Object.entries(chart.options.scales || {})) {
     if (scale.ticks) { scale.ticks.color = EXP_FRAME; if (!scale.ticks.font) scale.ticks.font = {}; scale.ticks.font.size = 18; }
@@ -64,6 +76,7 @@ export default function exportPng(chart, opts = {}) {
     if (!chart.options.plugins.legend.labels.font) chart.options.plugins.legend.labels.font = {};
     chart.options.plugins.legend.labels.font.size = 14;
   }
+  // Thicken visible datasets
   chart.data.datasets.forEach(d => { if (d.borderWidth) d.borderWidth = Math.max(d.borderWidth * 2, 3); });
 
   // Resize and force synchronous render
@@ -73,14 +86,13 @@ export default function exportPng(chart, opts = {}) {
   chart.canvas.width = chartW;
   chart.canvas.height = chartH;
   chart.resize(chartW, chartH);
-  chart.update('none'); // synchronous, no animation
+  chart.update('none');
 
   // ── Compose export canvas ──
   const off = document.createElement('canvas');
   off.width = W; off.height = H;
   const ctx = off.getContext('2d');
 
-  // Background
   ctx.fillStyle = EXP_BG;
   ctx.fillRect(0, 0, W, H);
 
@@ -94,12 +106,10 @@ export default function exportPng(chart, opts = {}) {
 
   // Branded decorations
   if (!isRaw) {
-    // Logo (top-left)
     if (logoImg?.naturalWidth) {
       const lh = 42, lw = (lh / logoImg.naturalHeight) * logoImg.naturalWidth;
       try { ctx.drawImage(logoImg, PAD, 18, lw, lh); } catch (e) { /* skip */ }
     }
-    // Title (centered)
     if (title) {
       ctx.fillStyle = EXP_TEXT;
       ctx.font = '400 24px DM Sans, Helvetica Neue, sans-serif';
@@ -107,7 +117,6 @@ export default function exportPng(chart, opts = {}) {
       ctx.fillText(title, W / 2, 50);
       ctx.textAlign = 'left';
     }
-    // Source (bottom-right)
     const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
     const now = new Date();
     ctx.fillStyle = 'rgba(7,11,9,0.6)';
@@ -125,6 +134,13 @@ export default function exportPng(chart, opts = {}) {
   a.click();
 
   // ── Restore ──
+  // Put original datasets back (including hidden ones)
+  chart.data.datasets = origDatasets;
+  // Restore hidden states
+  origDatasets.forEach((d, i) => { d.hidden = save.hiddenStates[i]; });
+  // Restore border widths on original datasets
+  origDatasets.forEach((d, i) => { d.borderWidth = save.widths[i]; });
+
   chart.options.devicePixelRatio = save.dpr || undefined;
   for (const [id, scale] of Object.entries(chart.options.scales || {})) {
     const o = save.scales[id] || {};
@@ -137,7 +153,6 @@ export default function exportPng(chart, opts = {}) {
     chart.options.plugins.legend.labels.color = save.legendColor;
     if (chart.options.plugins.legend.labels.font) chart.options.plugins.legend.labels.font.size = save.legendSize;
   }
-  chart.data.datasets.forEach((d, i) => { d.borderWidth = save.widths[i]; });
   chart.canvas.width = save.cw; chart.canvas.height = save.ch;
   chart.canvas.style.width = save.w; chart.canvas.style.height = save.h;
   chart.resize(); chart.update('none');
