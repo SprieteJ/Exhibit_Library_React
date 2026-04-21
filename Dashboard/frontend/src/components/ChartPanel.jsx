@@ -12,7 +12,6 @@ const CDEFAULT = {
 };
 
 const _logoImg = new Image();
-_logoImg.crossOrigin = 'anonymous';
 _logoImg.src = '/static/logo.png';
 
 export default function ChartPanel({ title, source, loading, error, chartType, chartData, chartOptions, summary, children }) {
