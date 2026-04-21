@@ -22,20 +22,7 @@ export function fmtBig(v) {
 const MONTHS_SHORT = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
 /**
- * Format a date string (YYYY-MM-DD) based on span.
- * <= 2 years:  "MMM-YY"  (e.g. "Jan-25")
- * > 2 years:   "YYYY"    (e.g. "2025")
- */
-function fmtDateLabel(dateStr, useYearOnly) {
-  if (!dateStr || dateStr.length < 7) return dateStr || '';
-  if (useYearOnly) return dateStr.slice(0, 4);
-  const m = parseInt(dateStr.slice(5, 7), 10) - 1;
-  const y = dateStr.slice(2, 4);
-  return MONTHS_SHORT[m] + '-' + y;
-}
-
-/**
- * Compute the date span in months from a labels array of "YYYY-MM-DD" strings.
+ * Compute date span in months from a sorted labels array of "YYYY-MM-DD" strings.
  */
 function spanMonths(labels) {
   if (!labels || labels.length < 2) return 0;
@@ -46,40 +33,83 @@ function spanMonths(labels) {
 }
 
 /**
- * Determine which dates to show as ticks based on span:
- *   <= 12 months  → every 3 months
- *   <= 36 months  → every 6 months
- *   > 36 months   → every 12 months (Jan only)
- *
- * Returns a Set of indices that should be shown.
+ * Parse a "YYYY-MM-DD" string into a Date object (UTC).
+ */
+function parseDate(s) {
+  return new Date(s + 'T00:00:00Z');
+}
+
+/**
+ * Format a date label based on span:
+ *   <= 1 month:   "dd MMM YY"   (e.g. "05 Jan 25")
+ *   <= 6 months:  "dd MMM YY"   (e.g. "05 Jan 25")
+ *   <= 36 months: "MMM-YY"      (e.g. "Jan-25")
+ *   > 36 months:  "YYYY"        (e.g. "2025")
+ */
+function fmtDateLabel(dateStr, span) {
+  if (!dateStr || dateStr.length < 10) return dateStr || '';
+  if (span > 36) return dateStr.slice(0, 4); // YYYY
+  const d = parseInt(dateStr.slice(8, 10), 10);
+  const m = parseInt(dateStr.slice(5, 7), 10) - 1;
+  const y = dateStr.slice(2, 4);
+  if (span <= 6) return d + ' ' + MONTHS_SHORT[m] + ' ' + y; // dd MMM YY
+  return MONTHS_SHORT[m] + '-' + y; // MMM-YY
+}
+
+/**
+ * Determine which date indices to show as ticks:
+ *   <= 1 month  → every ~7 days (weekly)         format: dd MMM YY
+ *   <= 3 months → every ~14 days (biweekly)      format: dd MMM YY
+ *   <= 6 months → every ~30 days (monthly)       format: dd MMM YY
+ *   <= 12 months → every 3 months                format: MMM-YY
+ *   <= 36 months → every 6 months                format: MMM-YY
+ *   > 36 months  → every January                 format: YYYY
  */
 function pickTickIndices(labels, span) {
-  const step = span <= 12 ? 3 : span <= 36 ? 6 : 12;
-  const useYearOnly = span > 36;
   const shown = new Set();
-  let lastShown = null;
+  if (!labels || labels.length === 0) return shown;
 
-  for (let i = 0; i < labels.length; i++) {
-    const d = labels[i];
-    if (!d || d.length < 7) continue;
-    const y = parseInt(d.slice(0, 4), 10);
-    const m = parseInt(d.slice(5, 7), 10);
-
-    if (useYearOnly) {
-      // Show only January of each year
-      if (m === 1 && (lastShown === null || y !== lastShown)) {
+  if (span <= 6) {
+    // Day-level spacing: 7d for 1m, 14d for 3m, 30d for 6m
+    const dayStep = span <= 1 ? 7 : span <= 3 ? 14 : 30;
+    let lastTs = null;
+    for (let i = 0; i < labels.length; i++) {
+      const d = labels[i];
+      if (!d || d.length < 10) continue;
+      const ts = parseDate(d).getTime();
+      if (lastTs === null || (ts - lastTs) >= dayStep * 86400000 * 0.9) {
         shown.add(i);
-        lastShown = y;
+        lastTs = ts;
       }
-    } else {
-      // Show every N months: Jan, Apr, Jul, Oct for 3-month; Jan, Jul for 6-month
+    }
+  } else if (span <= 36) {
+    // Month-level spacing: every 3 months for 1y, every 6 months for 2-3y
+    const step = span <= 12 ? 3 : 6;
+    let lastShown = null;
+    for (let i = 0; i < labels.length; i++) {
+      const d = labels[i];
+      if (!d || d.length < 7) continue;
+      const y = parseInt(d.slice(0, 4), 10);
+      const m = parseInt(d.slice(5, 7), 10);
       const monthKey = y * 12 + m;
       if (lastShown === null || monthKey - lastShown >= step) {
-        // Snap to a clean month boundary
         if ((m - 1) % step === 0) {
           shown.add(i);
           lastShown = monthKey;
         }
+      }
+    }
+  } else {
+    // Year-level: show only January
+    let lastYear = null;
+    for (let i = 0; i < labels.length; i++) {
+      const d = labels[i];
+      if (!d || d.length < 7) continue;
+      const y = parseInt(d.slice(0, 4), 10);
+      const m = parseInt(d.slice(5, 7), 10);
+      if (m === 1 && (lastYear === null || y !== lastYear)) {
+        shown.add(i);
+        lastYear = y;
       }
     }
   }
@@ -99,7 +129,6 @@ function pickTickIndices(labels, span) {
  */
 export function xAxisConfig(labels, overrides = {}) {
   const span = spanMonths(labels || []);
-  const useYearOnly = span > 36;
   const tickIndices = labels ? pickTickIndices(labels, span) : new Set();
 
   return {
@@ -111,7 +140,7 @@ export function xAxisConfig(labels, overrides = {}) {
       callback: function(val, index) {
         if (!tickIndices.has(index)) return null;
         const label = this.getLabelForValue(val);
-        return fmtDateLabel(label, useYearOnly);
+        return fmtDateLabel(label, span);
       },
       ...overrides.ticks,
     },
