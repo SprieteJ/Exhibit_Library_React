@@ -1,6 +1,13 @@
-import { useRef, useEffect, useState, useCallback } from 'react';
+import { useRef, useEffect, useState, useCallback, useMemo } from 'react';
 import Chart from 'chart.js/auto';
 import exportPng from '../utils/exportPng';
+import { drawingPlugin, createDrawingState, attachDrawingHandlers } from '../utils/drawingPlugin';
+import DrawingToolbar from './DrawingToolbar';
+
+// Register the drawing plugin once
+if (!Chart.registry.plugins.get('drawing')) {
+  Chart.register(drawingPlugin);
+}
 
 const CDEFAULT = {
   responsive: true, maintainAspectRatio: false, animation: { duration: 0 },
@@ -18,29 +25,58 @@ export default function ChartPanel({ title, source, loading, error, chartType, c
   const canvasRef = useRef(null);
   const chartRef = useRef(null);
   const hiddenRef = useRef({});
+  const cleanupRef = useRef(null);
   const [dropOpen, setDropOpen] = useState(false);
+  const [, forceRender] = useState(0);
+
+  // One drawing state per ChartPanel instance, reset when chartData changes identity
+  const drawState = useMemo(() => createDrawingState(), [chartData]);
+
+  const triggerUpdate = useCallback(() => {
+    if (chartRef.current) chartRef.current.draw();
+    forceRender(n => n + 1);
+  }, []);
 
   useEffect(() => {
     if (children || !chartData || !canvasRef.current) return;
+
     if (chartRef.current?.data?.datasets) {
       chartRef.current.data.datasets.forEach((ds, i) => {
         hiddenRef.current[ds.label] = !chartRef.current.isDatasetVisible(i);
       });
     }
     if (chartRef.current) { chartRef.current.destroy(); chartRef.current = null; }
+    if (cleanupRef.current) { cleanupRef.current(); cleanupRef.current = null; }
+
     const datasets = chartData.datasets.map(ds => ({
       ...ds, hidden: hiddenRef.current[ds.label] ?? ds.hidden ?? false,
     }));
+
+    const mergedOpts = {
+      ...CDEFAULT, ...chartOptions,
+      plugins: {
+        ...CDEFAULT.plugins, ...chartOptions?.plugins,
+        drawing: drawState,
+      },
+    };
+
     const ctx = canvasRef.current.getContext('2d');
     chartRef.current = new Chart(ctx, {
       type: chartType || 'line',
       data: { ...chartData, datasets },
-      options: { ...CDEFAULT, ...chartOptions, plugins: { ...CDEFAULT.plugins, ...chartOptions?.plugins } },
+      options: mergedOpts,
     });
-    return () => { if (chartRef.current) { chartRef.current.destroy(); chartRef.current = null; } };
-  }, [chartData, chartType, chartOptions, children]);
 
-  // Close dropdown when clicking outside
+    // Attach drawing event handlers
+    cleanupRef.current = attachDrawingHandlers(canvasRef.current, chartRef.current, drawState, triggerUpdate);
+
+    return () => {
+      if (cleanupRef.current) { cleanupRef.current(); cleanupRef.current = null; }
+      if (chartRef.current) { chartRef.current.destroy(); chartRef.current = null; }
+    };
+  }, [chartData, chartType, chartOptions, children, drawState, triggerUpdate]);
+
+  // Close dropdown on outside click
   useEffect(() => {
     if (!dropOpen) return;
     const close = () => setDropOpen(false);
@@ -51,12 +87,7 @@ export default function ChartPanel({ title, source, loading, error, chartType, c
   const handleExport = useCallback((mode) => {
     if (!chartRef.current) return;
     const slug = (title || 'chart').toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '');
-    exportPng(chartRef.current, {
-      title: title || '',
-      filename: slug,
-      mode,
-      logoImg: _logoImg,
-    });
+    exportPng(chartRef.current, { title: title || '', filename: slug, mode, logoImg: _logoImg });
     setDropOpen(false);
   }, [title]);
 
@@ -70,9 +101,7 @@ export default function ChartPanel({ title, source, loading, error, chartType, c
           <div className="export-wrap">
             <button className="export-btn" onClick={(e) => { e.stopPropagation(); setDropOpen(v => !v); }} title="Save as PNG">
               <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                <polyline points="7 10 12 15 17 10" />
-                <line x1="12" y1="15" x2="12" y2="3" />
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" />
               </svg>
             </button>
             {dropOpen && (
@@ -84,8 +113,12 @@ export default function ChartPanel({ title, source, loading, error, chartType, c
           </div>
         )}
       </div>
+
+      {/* Drawing toolbar — only for canvas charts */}
+      {hasChart && <DrawingToolbar drawState={drawState} onUpdate={triggerUpdate} />}
+
       <div className="perf-row">{summary || null}</div>
-      <div className="chart-area">
+      <div className="chart-area" style={drawState.enabled ? { cursor: drawState.tool === 'range' ? 'ns-resize' : 'crosshair' } : {}}>
         {children ? children : <canvas ref={canvasRef} />}
         <div className={`spinner-wrap${loading ? ' on' : ''}`}><div className="spinner" /></div>
         {error && !loading && (
