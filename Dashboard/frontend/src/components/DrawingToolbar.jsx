@@ -6,7 +6,7 @@ const TOOLS = [
   { id: 'range', label: 'Range', icon: 'M3,8 L21,8 M3,16 L21,16', title: 'Horizontal range — drag vertically' },
 ];
 
-const COLORS = ['#F7931A', '#00D64A', '#EC5B5B', '#2471CC', '#746BE6', '#E1C87E', '#FFFFFF'];
+const COLORS = ['#7FB2F1', '#AEA9EA', '#ED9BE5', '#ED9B9B'];
 
 export default function DrawingToolbar({ drawState, onUpdate }) {
   const [showColors, setShowColors] = useState(false);

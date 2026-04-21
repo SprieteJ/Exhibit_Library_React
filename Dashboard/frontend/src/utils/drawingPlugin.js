@@ -11,7 +11,7 @@ export function createDrawingState() {
     tool: null,
     annotations: [],
     pending: null,
-    color: '#F7931A',
+    color: '#7FB2F1',
     _phase: 0,
     _overlay: null,   // overlay canvas element
     _chartRef: null,   // reference to Chart.js instance
