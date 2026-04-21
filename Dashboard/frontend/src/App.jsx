@@ -83,6 +83,9 @@ const SecSharpe     = lazy(() => import('./charts/baskets/SecSharpe'));
 // ── Crypto Market ────────────────────────────────────────────────────────────
 const CmTotalMcap   = lazy(() => import('./charts/crypto_market/CmTotalMcap'));
 
+// ── Control Center ───────────────────────────────────────────────────────────
+const CCMatrix      = lazy(() => import('./charts/control_center/CCMatrix'));
+
 // ── ETF ──────────────────────────────────────────────────────────────────────
 const EtfNetFlows   = lazy(() => import('./charts/etf/EtfNetFlows'));
 const EtfDailyBar   = lazy(() => import('./charts/etf/EtfDailyBar'));
@@ -120,6 +123,8 @@ const CHART_COMPONENTS = {
   'sec-rrg': SecRrg, 'ana-bubble': AnaBubble, 'sec-sharpe': SecSharpe,
   // Crypto Market
   'cm-total-mcap': CmTotalMcap,
+  // Control Center
+  'cc-matrix': CCMatrix,
   // ETF
   'etf-net-flows': EtfNetFlows, 'etf-daily-bar': EtfDailyBar,
   'etf-weekly-bar': EtfWeeklyBar, 'etf-total-aum': EtfTotalAum,
