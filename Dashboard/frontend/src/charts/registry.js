@@ -12,6 +12,7 @@ const TABS = {
       { key: 'btc-200w-floor', label: '200-week floor', sub: 'BTC vs 200-week MA.', src: 'CoinGecko Pro' },
       { key: 'btc-200d-dev', label: '200d MA deviation', sub: 'Deviation from 200d MA.', src: 'CoinGecko Pro' },
       { key: 'btc-pi-cycle', label: 'Pi Cycle', sub: '111d vs 2x 350d MA.', src: 'CoinGecko Pro' },
+      { key: 'btc-ma-combined', label: 'MA combined', sub: 'Price with MAs (top) + MA gap (bottom).', src: 'CoinGecko Pro' },
     ]},
     { label: 'Volatility', charts: [
       { key: 'btc-realvol', label: 'Realized volatility', sub: '30d, 90d, 180d rolling vol.', src: 'CoinGecko Pro' },

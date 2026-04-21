@@ -34,6 +34,7 @@ const BtcCycles       = lazy(() => import('./charts/bitcoin/BtcCycles'));
 const BtcBull         = lazy(() => import('./charts/bitcoin/BtcBull'));
 const BtcGold         = lazy(() => import('./charts/bitcoin/BtcGold'));
 const BtcGoldRatio    = lazy(() => import('./charts/bitcoin/BtcGoldRatio'));
+const BtcMaCombined   = lazy(() => import('./charts/bitcoin/BtcMaCombined'));
 
 // ── Ethereum ─────────────────────────────────────────────────────────────────
 const EthMa           = lazy(() => import('./charts/ethereum/EthMa'));
@@ -105,6 +106,7 @@ const CHART_COMPONENTS = {
   'btc-dominance': BtcDominance, 'btc-funding': BtcFunding, 'btc-oi': BtcOi,
   'btc-funding-delta': BtcFundingDelta, 'btc-epochs': BtcEpochs, 'btc-cycles': BtcCycles,
   'btc-bull': BtcBull, 'btc-gold': BtcGold, 'btc-gold-ratio': BtcGoldRatio,
+  'btc-ma-combined': BtcMaCombined,
   // Ethereum
   'eth-ma': EthMa, 'eth-ma-gap': EthMaGap, 'eth-200d-dev': Eth200dDev,
   'eth-drawdown': EthDrawdown, 'eth-mcap': EthMcap, 'eth-btc-ratio': EthBtcRatio,
