@@ -1,6 +1,7 @@
-import { useRef, useEffect } from 'react';
+import { useRef, useEffect, useState, useCallback, forwardRef, useImperativeHandle } from 'react';
 import Chart from 'chart.js/auto';
 import useChartData from '../../hooks/useChartData';
+import exportCombinedPng from '../../utils/exportCombinedPng';
 import { XTICK, YTICK, XGRID, YGRID, fmtBig } from '../constants';
 
 const CDEFAULT = {
@@ -12,10 +13,17 @@ const CDEFAULT = {
   },
 };
 
-function MiniChart({ chartData, chartOptions, chartType, height }) {
+// Preload logo
+const _logoImg = new Image();
+_logoImg.crossOrigin = 'anonymous';
+_logoImg.src = '/static/logo.png';
+
+const MiniChart = forwardRef(function MiniChart({ chartData, chartOptions, chartType, height }, ref) {
   const canvasRef = useRef(null);
   const chartRef = useRef(null);
   const hiddenRef = useRef({});
+
+  useImperativeHandle(ref, () => ({ getChart: () => chartRef.current }));
 
   useEffect(() => {
     if (!chartData || !canvasRef.current) return;
@@ -42,13 +50,20 @@ function MiniChart({ chartData, chartOptions, chartType, height }) {
       <canvas ref={canvasRef} />
     </div>
   );
-}
+});
 
 export default function BtcMaCombined({ from, to }) {
   const maUrl = `/api/btc-ma?from=${from}&to=${to}`;
   const gapUrl = `/api/btc-ma-gap?from=${from}&to=${to}`;
   const ma = useChartData(maUrl);
   const gap = useChartData(gapUrl);
+
+  const topRef = useRef(null);
+  const botRef = useRef(null);
+
+  const [expLogo, setExpLogo] = useState(true);
+  const [expTitle, setExpTitle] = useState(true);
+  const [expSource, setExpSource] = useState(true);
 
   const loading = ma.loading || gap.loading;
   const error = ma.error || gap.error;
@@ -98,32 +113,53 @@ export default function BtcMaCombined({ from, to }) {
     }
   }
 
+  const handleExport = useCallback(() => {
+    const top = topRef.current?.getChart();
+    const bot = botRef.current?.getChart();
+    if (!top || !bot) return;
+    exportCombinedPng(top, bot, {
+      title: expTitle ? 'BTC Moving Averages — Combined' : '',
+      filename: 'btc_ma_combined',
+      showLogo: expLogo,
+      showTitle: expTitle,
+      showSource: expSource,
+      logoImg: _logoImg,
+    });
+  }, [expLogo, expTitle, expSource]);
+
   const xTicksCb = function(val) { const l = this.getLabelForValue(val); return l ? l.slice(0, 7) : ''; };
 
   return (
     <div className="main">
       <div className="chart-hdr">
         <div><div className="chart-title">BTC Moving Averages — Combined</div></div>
+        <button className="export-btn" onClick={handleExport} title="Save as PNG">
+          <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+            <polyline points="7 10 12 15 17 10" />
+            <line x1="12" y1="15" x2="12" y2="3" />
+          </svg>
+        </button>
       </div>
+
+      <div className="export-options">
+        <label><input type="checkbox" checked={expLogo} onChange={e => setExpLogo(e.target.checked)} /> Logo</label>
+        <label><input type="checkbox" checked={expTitle} onChange={e => setExpTitle(e.target.checked)} /> Title</label>
+        <label><input type="checkbox" checked={expSource} onChange={e => setExpSource(e.target.checked)} /> Source</label>
+      </div>
+
       <div className="perf-row">{summary}</div>
 
       <div className="chart-area" style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
-        {/* Spinner */}
         <div className={`spinner-wrap${loading ? ' on' : ''}`}><div className="spinner" /></div>
-
         {error && !loading && (
           <div className="empty" style={{ display: 'flex' }}>
             <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" /></svg>
             <p>Error: {error.message}</p>
           </div>
         )}
-
-        {/* Top panel: Price + MAs (65% height) */}
         {maChart && (
-          <MiniChart
-            height="calc(65% - 4px)"
-            chartData={maChart}
-            chartType="line"
+          <MiniChart ref={topRef} height="calc(65% - 4px)" chartData={maChart} chartType="line"
             chartOptions={{
               scales: {
                 x: { type: 'category', ticks: { ...XTICK, maxRotation: 0, maxTicksLimit: 8, display: false }, grid: XGRID },
@@ -132,16 +168,9 @@ export default function BtcMaCombined({ from, to }) {
             }}
           />
         )}
-
-        {/* Divider */}
         <div style={{ height: 1, background: 'var(--border)', flexShrink: 0 }} />
-
-        {/* Bottom panel: MA Gap (35% height) */}
         {gapChart && (
-          <MiniChart
-            height="calc(35% - 5px)"
-            chartData={gapChart}
-            chartType="bar"
+          <MiniChart ref={botRef} height="calc(35% - 5px)" chartData={gapChart} chartType="bar"
             chartOptions={{
               scales: {
                 x: { type: 'category', ticks: { ...XTICK, maxRotation: 0, maxTicksLimit: 8, callback: xTicksCb }, grid: XGRID },
