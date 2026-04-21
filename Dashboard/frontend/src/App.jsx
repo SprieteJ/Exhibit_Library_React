@@ -34,7 +34,6 @@ const BtcCycles       = lazy(() => import('./charts/bitcoin/BtcCycles'));
 const BtcBull         = lazy(() => import('./charts/bitcoin/BtcBull'));
 const BtcGold         = lazy(() => import('./charts/bitcoin/BtcGold'));
 const BtcGoldRatio    = lazy(() => import('./charts/bitcoin/BtcGoldRatio'));
-const BtcMaCombined   = lazy(() => import('./charts/bitcoin/BtcMaCombined'));
 
 // ── Ethereum ─────────────────────────────────────────────────────────────────
 const EthMa           = lazy(() => import('./charts/ethereum/EthMa'));
@@ -94,6 +93,11 @@ const EtfDailyBar   = lazy(() => import('./charts/etf/EtfDailyBar'));
 const EtfWeeklyBar  = lazy(() => import('./charts/etf/EtfWeeklyBar'));
 const EtfTotalAum   = lazy(() => import('./charts/etf/EtfTotalAum'));
 
+// ── Predictions ──────────────────────────────────────────────────────────────
+const PmDiscovery   = lazy(() => import('./charts/predictions/PmDiscovery'));
+const PmMovers      = lazy(() => import('./charts/predictions/PmMovers'));
+const PmWatchlist   = lazy(() => import('./charts/predictions/PmWatchlist'));
+
 const CHART_COMPONENTS = {
   // Macro
   'mac-price': MacroPrice, 'mac-sharpe': MacroSharpe, 'mac-btc-corr': MacroBtcCorr,
@@ -106,7 +110,6 @@ const CHART_COMPONENTS = {
   'btc-dominance': BtcDominance, 'btc-funding': BtcFunding, 'btc-oi': BtcOi,
   'btc-funding-delta': BtcFundingDelta, 'btc-epochs': BtcEpochs, 'btc-cycles': BtcCycles,
   'btc-bull': BtcBull, 'btc-gold': BtcGold, 'btc-gold-ratio': BtcGoldRatio,
-  'btc-ma-combined': BtcMaCombined,
   // Ethereum
   'eth-ma': EthMa, 'eth-ma-gap': EthMaGap, 'eth-200d-dev': Eth200dDev,
   'eth-drawdown': EthDrawdown, 'eth-mcap': EthMcap, 'eth-btc-ratio': EthBtcRatio,
@@ -132,6 +135,8 @@ const CHART_COMPONENTS = {
   // ETF
   'etf-net-flows': EtfNetFlows, 'etf-daily-bar': EtfDailyBar,
   'etf-weekly-bar': EtfWeeklyBar, 'etf-total-aum': EtfTotalAum,
+  // Predictions
+  'pm-discovery': PmDiscovery, 'pm-movers': PmMovers, 'pm-watchlist': PmWatchlist,
 };
 
 const WINDOW_CHARTS = new Set([

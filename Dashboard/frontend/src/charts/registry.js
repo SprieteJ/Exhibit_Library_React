@@ -12,7 +12,6 @@ const TABS = {
       { key: 'btc-200w-floor', label: '200-week floor', sub: 'BTC vs 200-week MA.', src: 'CoinGecko Pro' },
       { key: 'btc-200d-dev', label: '200d MA deviation', sub: 'Deviation from 200d MA.', src: 'CoinGecko Pro' },
       { key: 'btc-pi-cycle', label: 'Pi Cycle', sub: '111d vs 2x 350d MA.', src: 'CoinGecko Pro' },
-      { key: 'btc-ma-combined', label: 'MA combined', sub: 'Price with MAs (top) + MA gap (bottom).', src: 'CoinGecko Pro' },
     ]},
     { label: 'Volatility', charts: [
       { key: 'btc-realvol', label: 'Realized volatility', sub: '30d, 90d, 180d rolling vol.', src: 'CoinGecko Pro' },
@@ -153,6 +152,15 @@ const TABS = {
     ]},
     { label: 'Assets Under Management', charts: [
       { key: 'etf-total-aum', label: 'Total AuM', sub: 'Cumulative AuM for BTC and ETH spot ETFs.', src: 'Farside Investors' },
+    ]},
+  ]},
+  predictions: { label: 'Predictions', groups: [
+    { label: 'Live Markets', charts: [
+      { key: 'pm-discovery', label: 'Discovery', sub: 'All active markets by category and volume.' },
+      { key: 'pm-movers', label: '24h Movers', sub: 'Biggest probability shifts in the last 24 hours.' },
+    ]},
+    { label: 'Personal', charts: [
+      { key: 'pm-watchlist', label: 'Watchlist', sub: 'Your saved markets with live probabilities.' },
     ]},
   ]},
   data: { label: 'Data', groups: [
