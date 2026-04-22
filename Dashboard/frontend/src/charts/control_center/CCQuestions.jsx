@@ -2,9 +2,13 @@ import { useState } from 'react';
 import useChartData from '../../hooks/useChartData';
 import ChartPanel from '../../components/ChartPanel';
 
-function CorrelationBar({ value, label, detail, chartKey, onNav }) {
+function CorrelationBar({ value, label, detail, chartKey, onNav, expectedSign }) {
   if (value == null) return null;
   const abs = Math.abs(value);
+
+  // expectedSign: -1 means negative correlation = macro-driven (DXY, VIX)
+  //               +1 means positive correlation = macro-driven (SPY)
+  const aligned = expectedSign ? (value * expectedSign > 0) : true;
 
   let fg, tag;
   if (abs > 0.3) {
@@ -18,10 +22,11 @@ function CorrelationBar({ value, label, detail, chartKey, onNav }) {
     tag = 'INACTIVE';
   }
 
-  // Bar width: 0 = no bar, 0.5 = half, 1.0 = full side
-  const barWidth = Math.min(50, abs * 100); // 0.5 corr = full half
+  // Bar width: 0.5 corr = full half side
+  const barWidth = Math.min(50, abs * 100);
   const isPositive = value >= 0;
-  const barColor = isPositive ? '#00D64A' : '#EC5B5B';
+  // Green if aligned with expected macro direction, red if opposite
+  const barColor = abs < 0.05 ? '#555' : aligned ? '#00D64A' : '#EC5B5B';
 
   return (
     <div style={{ padding: '10px 0', borderBottom: '0.5px solid rgba(128,128,128,0.06)' }}>
@@ -43,9 +48,7 @@ function CorrelationBar({ value, label, detail, chartKey, onNav }) {
       </div>
       {/* Centered diverging bar */}
       <div style={{ position: 'relative', height: 12, background: 'var(--input-bg)', borderRadius: 3, overflow: 'hidden', marginLeft: 16 }}>
-        {/* Center line */}
         <div style={{ position: 'absolute', left: '50%', top: 0, bottom: 0, width: 1, background: 'var(--border)', zIndex: 2 }} />
-        {/* Bar — extends left for negative, right for positive */}
         {isPositive ? (
           <div style={{
             position: 'absolute', left: '50%', top: 0, height: '100%',
@@ -61,7 +64,6 @@ function CorrelationBar({ value, label, detail, chartKey, onNav }) {
             transition: 'width 0.4s',
           }} />
         )}
-        {/* Scale labels */}
         <span style={{ position: 'absolute', left: 4, top: -1, fontSize: 8, color: 'var(--muted)', opacity: 0.5 }}>-1</span>
         <span style={{ position: 'absolute', right: 4, top: -1, fontSize: 8, color: 'var(--muted)', opacity: 0.5 }}>+1</span>
       </div>
@@ -181,6 +183,7 @@ export default function CCQuestions({ onNavigate }) {
             <CorrelationBar
               label="BTC vs US Dollar (DXY)"
               value={c.DXY?.corr}
+              expectedSign={-1}
               detail="Negative = BTC rises when dollar weakens (risk-on liquidity). Positive = BTC follows dollar strength. Near zero = BTC ignoring the dollar."
               chartKey="mac-btc-dxy-corr"
               onNav={goTo}
@@ -188,6 +191,7 @@ export default function CCQuestions({ onNavigate }) {
             <CorrelationBar
               label="BTC vs Volatility (VIX)"
               value={c.VIX?.corr}
+              expectedSign={-1}
               detail="Negative = BTC sells when fear spikes (trading as risk asset). Positive = BTC rallies on fear (trading as a hedge). Near zero = BTC ignoring volatility."
               chartKey="mac-btc-vix-corr"
               onNav={goTo}
@@ -195,6 +199,7 @@ export default function CCQuestions({ onNavigate }) {
             <CorrelationBar
               label="BTC vs Equities (SPY)"
               value={c.SPY?.corr}
+              expectedSign={1}
               detail="Positive = BTC moving in lockstep with stocks (risk-on/risk-off). Negative = BTC diverging from equities. Near zero = BTC decoupled from equity markets."
               chartKey="mac-btc-spy-corr"
               onNav={goTo}
