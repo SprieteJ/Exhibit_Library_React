@@ -4,6 +4,9 @@ const TABS = {
       { key: 'cc-matrix', label: 'Signal matrix', sub: 'Flagged control center rules.' },
       { key: 'cc-regime', label: 'Regime panel', sub: 'Macro regime indicators.' },
     ]},
+    { label: 'Questions', charts: [
+      { key: 'cc-questions', label: 'Market questions', sub: 'Core questions scored 0-100.' },
+    ]},
   ]},
   bitcoin: { label: 'Bitcoin', groups: [
     { label: 'Moving Averages', charts: [
