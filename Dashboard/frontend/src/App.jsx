@@ -222,7 +222,7 @@ export default function App() {
 
       <Suspense fallback={<div className="main"><div className="chart-area"><div className="spinner-wrap on"><div className="spinner" /></div></div></div>}>
         {ChartComponent
-          ? <ChartComponent from={from} to={to} window={win} />
+          ? <ChartComponent from={from} to={to} window={win} onNavigate={(key) => { setActiveChart(key); const tab = Object.entries(TABS).find(([,t]) => t.groups?.some(g => g.charts?.some(c => c.key === key))); if (tab) setActiveTab(tab[0]); }} />
           : <Placeholder chartKey={activeChart} />}
       </Suspense>
 
