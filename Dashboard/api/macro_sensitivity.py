@@ -1,283 +1,185 @@
 """
-api/macro_sensitivity.py v3 — "Is macro driving the market?"
+api/macro_sensitivity.py v4
 
-Current signal: hourly rolling correlation (7-day window) of BTC vs DXY and 10Y yield.
-Z-score baseline: daily rolling correlation computed over full history (back to 2013).
+"Is macro driving the crypto market?"
 
-This way a 0.5 correlation today is properly flagged as "high" because the daily
-history includes periods where BTC was completely independent (2017, 2019, 2021).
+Simple, defensible approach:
+- Compute 30-day daily rolling correlation of BTC vs DXY, VIX, SPY
+- The macro sensitivity reading = average of the absolute correlations
+- When multiple correlations are simultaneously elevated, crypto is entangled with macro
+- When all are near zero, crypto trades independently
+
+No z-scores, no sigmoid mapping, no made-up thresholds. Just the raw correlations
+and their average magnitude, with historical context.
 """
 import math
-from datetime import datetime, timedelta
 from api.shared import get_conn
 import psycopg2.extras
 
 
-def _rolling_corr(rets_a, rets_b, keys, win):
-    """Compute rolling Pearson correlation over paired return series."""
+FACTORS = {
+    'DXY': {'ticker': 'DX-Y.NYB', 'table': 'macro_daily', 'col': 'ticker', 'val': 'close',
+            'label': 'US Dollar (DXY)', 'method': 'log'},
+    'VIX': {'ticker': '^VIX', 'table': 'macro_daily', 'col': 'ticker', 'val': 'close',
+            'label': 'Volatility (VIX)', 'method': 'log'},
+    'SPY': {'ticker': 'SPY', 'table': 'macro_daily', 'col': 'ticker', 'val': 'close',
+            'label': 'Equities (SPY)', 'method': 'log'},
+}
+
+
+def _fetch_series(cur, table, col, ticker, val_col, start_date):
+    cur.execute(f"""
+        SELECT timestamp::date as date, {val_col} FROM {table}
+        WHERE {col} = %s AND {val_col} > 0 AND timestamp >= %s
+        ORDER BY timestamp
+    """, (ticker, start_date))
+    return {str(r['date']): float(r[val_col]) for r in cur.fetchall()}
+
+
+def _forward_fill(raw, all_dates):
+    filled = {}
+    last = None
+    for d in all_dates:
+        v = raw.get(d)
+        if v is not None:
+            last = v
+        if last is not None:
+            filled[d] = last
+    return filled
+
+
+def _log_returns(prices, dates):
+    rets = {}
+    prev = None
+    for d in dates:
+        p = prices.get(d)
+        if p and prev and prev > 0:
+            rets[d] = math.log(p / prev)
+        prev = p if p else prev
+    return rets
+
+
+def _rolling_corr(rets_a, rets_b, dates, window):
+    """Returns list of (date, correlation_or_None)."""
     results = []
-    for i in range(len(keys)):
-        start = max(0, i - win + 1)
+    for i in range(len(dates)):
+        if i < window:
+            results.append((dates[i], None))
+            continue
         pairs = []
-        for j in range(start, i + 1):
-            k = keys[j]
-            a = rets_a.get(k)
-            b = rets_b.get(k)
+        for j in range(i - window, i):
+            d = dates[j]
+            a, b = rets_a.get(d), rets_b.get(d)
             if a is not None and b is not None:
                 pairs.append((a, b))
-        if len(pairs) < win * 0.5:
-            results.append(None)
+        if len(pairs) < window * 0.5:
+            results.append((dates[i], None))
             continue
         ax = [p[0] for p in pairs]
         bx = [p[1] for p in pairs]
         n = len(pairs)
         ma = sum(ax) / n
         mb = sum(bx) / n
-        num = sum((ax[k2] - ma) * (bx[k2] - mb) for k2 in range(n))
-        da = math.sqrt(sum((a - ma)**2 for a in ax))
-        db = math.sqrt(sum((b - mb)**2 for b in bx))
-        corr = (num / (da * db)) if (da > 0 and db > 0) else 0.0
-        results.append(round(corr, 4))
+        num = sum((ax[k] - ma) * (bx[k] - mb) for k in range(n))
+        da = math.sqrt(sum((a - ma) ** 2 for a in ax))
+        db = math.sqrt(sum((b - mb) ** 2 for b in bx))
+        corr = (num / (da * db)) if da > 0 and db > 0 else 0.0
+        results.append((dates[i], round(corr, 4)))
     return results
 
 
-def _log_returns(price_map, keys):
-    rets = {}
-    prev = None
-    for k in keys:
-        p = price_map.get(k)
-        if p and prev and prev > 0:
-            rets[k] = math.log(p / prev)
-        prev = p if p else prev
-    return rets
-
-
-def _first_diffs(val_map, keys):
-    rets = {}
-    prev = None
-    for k in keys:
-        v = val_map.get(k)
-        if v is not None and prev is not None:
-            rets[k] = v - prev
-        prev = v if v is not None else prev
-    return rets
-
-
-def _forward_fill(raw_map, all_keys):
-    filled = {}
-    last = None
-    for k in all_keys:
-        v = raw_map.get(k)
-        if v is not None:
-            last = v
-        if last is not None:
-            filled[k] = last
-    return filled
-
-
 def handle_macro_sensitivity(params):
-    window_hours = int(params.get("window", ["168"])[0])  # 7 days default
-    daily_window = 30  # 30-day window for daily correlation baseline
+    date_from = params.get("from", ["2018-01-01"])[0]
+    date_to = params.get("to", ["2099-01-01"])[0]
+    window = int(params.get("window", ["30"])[0])
 
     conn = get_conn()
     cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
 
-    factors = {
-        'DXY': {'ticker': 'DX-Y.NYB', 'method': 'log', 'label': 'US Dollar (DXY)'},
-        '10Y': {'ticker': '^TNX', 'method': 'diff', 'label': '10Y Treasury Yield'},
-    }
+    # Fetch BTC
+    btc = _fetch_series(cur, 'price_daily', 'symbol', 'BTC', 'price_usd', date_from)
 
-    # ══════════════════════════════════════════════════════════════════════
-    # PART 1: Daily correlation history (z-score baseline, back to 2013+)
-    # ══════════════════════════════════════════════════════════════════════
-
-    cur.execute("""
-        SELECT timestamp::date as date, price_usd FROM price_daily
-        WHERE symbol = 'BTC' AND price_usd > 0 ORDER BY timestamp
-    """)
-    btc_daily = {str(r['date']): float(r['price_usd']) for r in cur.fetchall()}
-
-    factor_daily = {}
-    for label, f in factors.items():
-        cur.execute("""
-            SELECT timestamp::date as date, close FROM macro_daily
-            WHERE ticker = %s AND close > 0 ORDER BY timestamp
-        """, (f['ticker'],))
-        factor_daily[label] = {str(r['date']): float(r['close']) for r in cur.fetchall()}
-
-    daily_dates = sorted(btc_daily.keys())
-
-    # Forward-fill macro over weekends
-    for label in factors:
-        factor_daily[label] = _forward_fill(factor_daily[label], daily_dates)
-
-    # Daily returns
-    btc_daily_rets = _log_returns(btc_daily, daily_dates)
-    factor_daily_rets = {}
-    for label, f in factors.items():
-        if f['method'] == 'log':
-            factor_daily_rets[label] = _log_returns(factor_daily[label], daily_dates)
-        else:
-            factor_daily_rets[label] = _first_diffs(factor_daily[label], daily_dates)
-
-    # Daily rolling correlations
-    daily_corr_history = {}
-    for label in factors:
-        daily_corr_history[label] = _rolling_corr(
-            btc_daily_rets, factor_daily_rets[label], daily_dates, daily_window
-        )
-
-    # Compute mean and std of daily correlations (excluding None, full history)
-    daily_stats = {}
-    for label in factors:
-        vals = [c for c in daily_corr_history[label] if c is not None]
-        if len(vals) < 50:
-            daily_stats[label] = {'mean': 0, 'std': 1}
-            continue
-        mean = sum(vals) / len(vals)
-        std = math.sqrt(sum((v - mean)**2 for v in vals) / len(vals))
-        daily_stats[label] = {'mean': mean, 'std': max(std, 0.01)}
-
-    # ══════════════════════════════════════════════════════════════════════
-    # PART 2: Hourly correlation (current signal)
-    # ══════════════════════════════════════════════════════════════════════
-
-    cur.execute("""
-        SELECT timestamp, price_usd FROM price_hourly
-        WHERE symbol = 'BTC' AND price_usd > 0 ORDER BY timestamp
-    """)
-    btc_hourly = {}
-    for r in cur.fetchall():
-        ts = r['timestamp'].replace(minute=0, second=0, microsecond=0)
-        btc_hourly[ts.strftime('%Y-%m-%d %H:00')] = float(r['price_usd'])
-
-    factor_hourly = {}
-    for label, f in factors.items():
-        cur.execute("""
-            SELECT timestamp, close FROM macro_hourly
-            WHERE ticker = %s AND close > 0 ORDER BY timestamp
-        """, (f['ticker'],))
-        fmap = {}
-        for r in cur.fetchall():
-            ts = r['timestamp'].replace(minute=0, second=0, microsecond=0)
-            fmap[ts.strftime('%Y-%m-%d %H:00')] = float(r['close'])
-        factor_hourly[label] = fmap
+    # Fetch factors
+    factor_data = {}
+    for name, f in FACTORS.items():
+        factor_data[name] = _fetch_series(cur, f['table'], f['col'], f['ticker'], f['val'], date_from)
 
     conn.close()
 
-    all_hours = sorted(btc_hourly.keys())
+    if not btc:
+        return {"error": "no BTC data"}
 
-    # Forward-fill macro hourly
-    for label in factors:
-        factor_hourly[label] = _forward_fill(factor_hourly[label], all_hours)
+    # Build common dates (BTC dates as base)
+    all_dates = sorted(btc.keys())
 
-    # Hourly returns
-    btc_h_rets = _log_returns(btc_hourly, all_hours)
-    factor_h_rets = {}
-    for label, f in factors.items():
-        if f['method'] == 'log':
-            factor_h_rets[label] = _log_returns(factor_hourly[label], all_hours)
-        else:
-            factor_h_rets[label] = _first_diffs(factor_hourly[label], all_hours)
+    # Forward-fill factors over weekends
+    for name in FACTORS:
+        factor_data[name] = _forward_fill(factor_data[name], all_dates)
 
-    # Hourly rolling correlations
-    hourly_corrs = {}
-    for label in factors:
-        hourly_corrs[label] = _rolling_corr(
-            btc_h_rets, factor_h_rets[label], all_hours, window_hours
-        )
+    # Compute log returns
+    btc_rets = _log_returns(btc, all_dates)
+    factor_rets = {}
+    for name in FACTORS:
+        factor_rets[name] = _log_returns(factor_data[name], all_dates)
 
-    # ══════════════════════════════════════════════════════════════════════
-    # PART 3: Z-score hourly correlations against daily baseline
-    # ══════════════════════════════════════════════════════════════════════
+    # Rolling correlations
+    corr_series = {}
+    for name in FACTORS:
+        corr_series[name] = _rolling_corr(btc_rets, factor_rets[name], all_dates, window)
 
-    # Downsample to daily (last hour of each day)
-    daily_buckets = {}
-    for i, h in enumerate(all_hours):
-        day = h[:10]
-        daily_buckets[day] = i
+    # Build output
+    out_dates = []
+    out_components = {name: [] for name in FACTORS}
+    out_abs_avg = []
 
-    output_dates = []
-    output_components = {label: {'corr': [], 'zscore': []} for label in factors}
-    output_score = []
+    for i, d in enumerate(all_dates):
+        if d < date_from:
+            continue
 
-    for day in sorted(daily_buckets.keys()):
-        idx = daily_buckets[day]
-        all_z = []
+        vals = {}
         skip = False
-
-        for label in factors:
-            corr = hourly_corrs[label][idx]
-            if corr is None:
+        for name in FACTORS:
+            _, c = corr_series[name][i]
+            if c is None:
                 skip = True
                 break
-            # Z-score against daily historical distribution
-            z = (corr - daily_stats[label]['mean']) / daily_stats[label]['std']
-            all_z.append(round(z, 4))
+            vals[name] = c
 
         if skip:
             continue
 
-        output_dates.append(day)
-        for j, label in enumerate(factors):
-            corr = hourly_corrs[label][idx]
-            output_components[label]['corr'].append(corr)
-            output_components[label]['zscore'].append(all_z[j])
+        out_dates.append(d)
+        for name in FACTORS:
+            out_components[name].append(vals[name])
 
-        # Score: average |z| mapped to 0-100 via sigmoid
-        abs_z = sum(abs(z) for z in all_z) / len(all_z)
-        score = round(100 * (1 - math.exp(-0.7 * abs_z)), 1)
-        output_score.append(score)
+        abs_avg = sum(abs(v) for v in vals.values()) / len(vals)
+        out_abs_avg.append(round(abs_avg, 4))
 
-    # Current values
+    # Historical percentile of current abs_avg
     current = {}
-    if output_dates:
-        current['score'] = output_score[-1]
-        for j, label in enumerate(factors):
-            current[label] = {
-                'corr': output_components[label]['corr'][-1],
-                'zscore': output_components[label]['zscore'][-1],
-            }
+    if out_dates:
+        latest_abs = out_abs_avg[-1]
+        below = sum(1 for v in out_abs_avg if v <= latest_abs)
+        percentile = round(100 * below / len(out_abs_avg), 1)
 
-    # Also return daily correlation history for the chart
-    daily_chart_dates = []
-    daily_chart_corrs = {label: [] for label in factors}
-    for i, d in enumerate(daily_dates):
-        if d < '2020-01-01':
-            continue
-        skip2 = False
-        for label in factors:
-            if daily_corr_history[label][i] is None:
-                skip2 = True
-                break
-        if skip2:
-            continue
-        daily_chart_dates.append(d)
-        for label in factors:
-            daily_chart_corrs[label].append(daily_corr_history[label][i])
+        current['abs_avg'] = latest_abs
+        current['percentile'] = percentile
+        for name in FACTORS:
+            current[name] = {
+                'corr': out_components[name][-1],
+                'label': FACTORS[name]['label'],
+            }
 
     return {
-        "dates": output_dates,
-        "score": output_score,
+        "dates": out_dates,
+        "abs_avg": out_abs_avg,
         "components": {
-            label: {
-                "label": factors[label]['label'],
-                "corr": output_components[label]['corr'],
-                "zscore": output_components[label]['zscore'],
+            name: {
+                "label": FACTORS[name]['label'],
+                "corr": out_components[name],
             }
-            for label in factors
+            for name in FACTORS
         },
         "current": current,
-        "window_hours": window_hours,
-        "daily_baseline": {
-            "dates": daily_chart_dates,
-            "components": {
-                label: {
-                    "corr": daily_chart_corrs[label],
-                    "mean": round(daily_stats[label]['mean'], 4),
-                    "std": round(daily_stats[label]['std'], 4),
-                }
-                for label in factors
-            },
-        },
+        "window": window,
     }
