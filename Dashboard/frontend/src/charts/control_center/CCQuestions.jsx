@@ -101,16 +101,29 @@ export default function CCQuestions({ onNavigate }) {
         {/* Active questions */}
         <QuestionBlock
           title="Is macro driving the crypto market?"
-          description="Hourly rolling correlation of BTC vs DXY and 10Y yield, z-scored against available history. 7-day window."
+          description="Measures whether BTC is responding to macro factors in real time. Each component computes the hourly rolling correlation over a 7-day window, then z-scores it against all available hourly history. A high absolute z-score means the current correlation is unusual, signalling a macro-driven regime."
           score={c.score}
           expanded={expanded.macro}
           onToggle={() => toggle('macro')}
           onNavigate={() => goTo('mac-sensitivity')}
         >
+          {/* Component 1: DXY */}
           <SubScore label="BTC vs US Dollar (DXY)" value={c.DXY?.zscore}
             detail={`ρ ${c.DXY?.corr?.toFixed(2)} · z ${c.DXY?.zscore?.toFixed(1)}`} color="#C084FC" />
+          <div style={{ padding: '4px 0 12px 16px', fontSize: 11, color: 'var(--muted)', lineHeight: 1.6 }}>
+            <strong style={{ color: 'var(--graphite)' }}>Why:</strong> When global dollar liquidity tightens (DXY up), risk assets sell off. When the dollar weakens, liquidity flows into risk. If BTC is tracking this, it is behaving as a macro liquidity instrument, not trading on crypto-native flows.
+            <br />
+            <strong style={{ color: 'var(--graphite)' }}>Calculation:</strong> Hourly log returns of BTC vs hourly log returns of DXY. 7-day (168h) rolling Pearson correlation, z-scored against all available hourly history.
+          </div>
+
+          {/* Component 2: 10Y */}
           <SubScore label="BTC vs 10Y Treasury Yield" value={c['10Y']?.zscore}
             detail={`ρ ${c['10Y']?.corr?.toFixed(2)} · z ${c['10Y']?.zscore?.toFixed(1)}`} color="#ED9B9B" />
+          <div style={{ padding: '4px 0 12px 16px', fontSize: 11, color: 'var(--muted)', lineHeight: 1.6 }}>
+            <strong style={{ color: 'var(--graphite)' }}>Why:</strong> The 10Y yield is the price of money. When yields rise, duration assets and risk assets reprice lower. If BTC responds to yield moves, it is being treated by the market as a rate-sensitive asset, meaning macro is setting the price.
+            <br />
+            <strong style={{ color: 'var(--graphite)' }}>Calculation:</strong> Hourly log returns of BTC vs hourly first differences in 10Y yield (yield changes in bps, not log returns, because yields can approach zero). Same 7-day rolling correlation, z-scored.
+          </div>
 
           {/* Sparkline */}
           {data.dates?.length > 5 && (
@@ -132,10 +145,14 @@ export default function CCQuestions({ onNavigate }) {
 
         {/* Future questions — collapsed, no data yet */}
         {[
-          { key: 'retail', title: 'Is retail or institutional flow driving?', desc: 'ETF flows, exchange deposit volumes, funding rates.' },
-          { key: 'leverage', title: 'Is the market leveraged?', desc: 'Open interest, funding rates, liquidation volumes.' },
-          { key: 'altdec', title: 'Are alts decoupling from BTC?', desc: 'BTC dominance, alt-BTC correlation, sector rotation.' },
-          { key: 'volcomp', title: 'Is volatility compressed (breakout imminent)?', desc: 'Realized vs implied vol, Bollinger bandwidth, ATR compression.' },
+          { key: 'retail', title: 'Is retail or institutional flow driving?',
+            desc: 'Compares ETF inflow patterns (institutional) vs exchange deposit volumes and small transaction counts (retail). When ETF flows dominate price action, institutions are driving. When exchange deposits and funding rate spikes lead, retail is in control.' },
+          { key: 'leverage', title: 'Is the market leveraged?',
+            desc: 'Combines open interest relative to spot volume, funding rate extremes, and liquidation clustering. High OI/volume ratio with elevated funding signals a leveraged market vulnerable to squeezes.' },
+          { key: 'altdec', title: 'Are alts decoupling from BTC?',
+            desc: 'Tracks rolling BTC dominance trend, alt/BTC correlation breakdown, and sector rotation breadth. When alt/BTC correlations drop and sector dispersion rises, alts are trading on their own narratives rather than following BTC.' },
+          { key: 'volcomp', title: 'Is volatility compressed (breakout imminent)?',
+            desc: 'Measures realized vol vs implied vol (DVOL), Bollinger bandwidth percentile, and ATR compression relative to its 90-day range. Sustained compression below historical norms precedes large directional moves.' },
         ].map(q => (
           <QuestionBlock key={q.key} title={q.title} description={q.desc} score={null}
             expanded={expanded[q.key]} onToggle={() => toggle(q.key)}>
