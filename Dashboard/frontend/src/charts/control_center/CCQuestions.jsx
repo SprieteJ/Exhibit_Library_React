@@ -178,25 +178,6 @@ export default function CCQuestions({ onNavigate }) {
               onNav={goTo}
             />
           </div>
-
-          {/* Sparkline */}
-          {data.dates?.length > 10 && (
-            <div style={{ marginTop: 16 }}>
-              <div style={{ fontSize: 10, color: 'var(--muted)', marginBottom: 4, fontFamily: 'var(--mono)' }}>Macro sensitivity over time</div>
-              <div style={{ display: 'flex', alignItems: 'flex-end', gap: 1, height: 40 }}>
-                {data.abs_avg.slice(-120).map((v, i) => {
-                  // Color based on where this value sits relative to the dataset
-                  const fg = v > 0.25 ? '#00D64A' : v > 0.15 ? '#E1C87E' : '#555';
-                  const h = Math.max(2, Math.min(100, v * 250));
-                  return <div key={i} style={{ flex: 1, minWidth: 1, height: h + '%', background: fg + '90', borderRadius: '1px 1px 0 0' }} />;
-                })}
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 2 }}>
-                <span style={{ fontSize: 9, color: 'var(--muted)', fontFamily: 'var(--mono)' }}>{data.dates[Math.max(0, data.dates.length - 120)]}</span>
-                <span style={{ fontSize: 9, color: 'var(--muted)', fontFamily: 'var(--mono)' }}>{data.dates[data.dates.length - 1]}</span>
-              </div>
-            </div>
-          )}
         </QuestionBlock>
 
         {/* Future questions */}
