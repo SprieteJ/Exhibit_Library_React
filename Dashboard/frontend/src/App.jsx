@@ -14,6 +14,10 @@ const MacroIgvBtc     = lazy(() => import('./charts/macro/MacroIgvBtc'));
 const MacroRisk       = lazy(() => import('./charts/macro/MacroRisk'));
 const MacroRealYields = lazy(() => import('./charts/macro/MacroRealYields'));
 const MacroStablecoin = lazy(() => import('./charts/macro/MacroStablecoin'));
+const MacroSensitivity = lazy(() => import('./charts/macro/MacroSensitivity'));
+const MacroBtcDxy = lazy(() => import('./charts/macro/MacroBtcDxy'));
+const MacroBtcVix = lazy(() => import('./charts/macro/MacroBtcVix'));
+const MacroBtcSpy = lazy(() => import('./charts/macro/MacroBtcSpy'));
 
 // ── Bitcoin ──────────────────────────────────────────────────────────────────
 const BtcMa           = lazy(() => import('./charts/bitcoin/BtcMa'));
@@ -104,6 +108,7 @@ const CHART_COMPONENTS = {
   'mac-price': MacroPrice, 'mac-sharpe': MacroSharpe, 'mac-btc-corr': MacroBtcCorr,
   'mac-matrix': MacroMatrix, 'mac-dxy-btc': MacroDxyBtc, 'mac-igv-btc': MacroIgvBtc,
   'mac-risk': MacroRisk, 'mac-real-yields': MacroRealYields, 'mac-stablecoin': MacroStablecoin,
+  'mac-sensitivity': MacroSensitivity, 'mac-btc-dxy-corr': MacroBtcDxy, 'mac-btc-vix-corr': MacroBtcVix, 'mac-btc-spy-corr': MacroBtcSpy,
   // Bitcoin
   'btc-ma': BtcMa, 'btc-ma-gap': BtcMaGap, 'btc-200w-floor': Btc200wFloor,
   'btc-200d-dev': Btc200dDev, 'btc-pi-cycle': BtcPiCycle, 'btc-realvol': BtcRealvol,
