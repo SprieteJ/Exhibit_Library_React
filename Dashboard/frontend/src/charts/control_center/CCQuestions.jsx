@@ -44,13 +44,13 @@ function CorrelationBar({ value, label, detail }) {
 }
 
 function ScoreBar({ value, percentile }) {
-  if (value == null) return null;
-  const pct = Math.min(100, value * 200);
+  if (percentile == null) return null;
+  const pct = Math.round(percentile);
   let fg, tag;
-  if (value > 0.25) {
+  if (pct > 70) {
     fg = '#00D64A';
     tag = 'MACRO-DRIVEN';
-  } else if (value > 0.15) {
+  } else if (pct > 40) {
     fg = '#E1C87E';
     tag = 'MODERATE';
   } else {
@@ -61,26 +61,26 @@ function ScoreBar({ value, percentile }) {
   return (
     <div>
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
-        <div style={{ flex: 1, height: 32, background: 'var(--input-bg)', borderRadius: 6, overflow: 'hidden' }}>
+        <div style={{ flex: 1, height: 32, background: 'var(--input-bg)', borderRadius: 6, overflow: 'hidden', position: 'relative' }}>
           <div style={{
             width: Math.max(pct, 3) + '%', height: '100%',
             background: `linear-gradient(90deg, ${fg}40, ${fg}90)`,
             borderRadius: 6, transition: 'width 0.6s ease',
           }} />
+          <div style={{ position: 'absolute', left: '40%', top: 0, bottom: 0, width: 1, background: 'var(--border)' }} />
+          <div style={{ position: 'absolute', left: '70%', top: 0, bottom: 0, width: 1, background: 'var(--border)' }} />
         </div>
-        <div style={{ fontFamily: 'var(--mono)', fontSize: 18, fontWeight: 700, color: fg, minWidth: 50, textAlign: 'right' }}>
-          {value.toFixed(2)}
+        <div style={{ fontFamily: 'var(--mono)', fontSize: 20, fontWeight: 700, color: fg, minWidth: 50, textAlign: 'right' }}>
+          {pct}%
         </div>
         <div style={{
           fontSize: 10, fontWeight: 600, padding: '3px 10px', borderRadius: 4,
           background: fg + '18', color: fg, minWidth: 70, textAlign: 'center',
         }}>{tag}</div>
       </div>
-      {percentile != null && (
-        <div style={{ fontSize: 11, color: 'var(--muted)', textAlign: 'right' }}>
-          {percentile.toFixed(0)}th percentile vs history
-        </div>
-      )}
+      <div style={{ fontSize: 11, color: 'var(--muted)' }}>
+        Current macro sensitivity is stronger than {pct}% of all 30-day periods over the last 3 years.
+      </div>
     </div>
   );
 }
@@ -110,7 +110,7 @@ function QuestionBlock({ title, description, expanded, onToggle, onNavigate, chi
 }
 
 export default function CCQuestions({ onNavigate }) {
-  const { data, loading, error } = useChartData('/api/macro-sensitivity?from=2018-01-01&window=30');
+  const { data, loading, error } = useChartData('/api/macro-sensitivity?from=2023-04-01&window=30');
   const [expanded, setExpanded] = useState({ macro: true });
 
   const toggle = (key) => setExpanded(prev => ({ ...prev, [key]: !prev[key] }));
@@ -121,11 +121,11 @@ export default function CCQuestions({ onNavigate }) {
   if (data?.current) {
     const c = data.current;
 
-    const headerBadge = c.abs_avg != null ? (
+    const headerBadge = c.percentile != null ? (
       <div style={{
         fontFamily: 'var(--mono)', fontSize: 14, fontWeight: 700, flexShrink: 0,
-        color: c.abs_avg > 0.25 ? '#00D64A' : c.abs_avg > 0.15 ? '#E1C87E' : '#555',
-      }}>{c.abs_avg.toFixed(2)}</div>
+        color: c.percentile > 70 ? '#00D64A' : c.percentile > 40 ? '#E1C87E' : '#555',
+      }}>{Math.round(c.percentile)}%</div>
     ) : null;
 
     content = (
@@ -174,8 +174,10 @@ export default function CCQuestions({ onNavigate }) {
               <div style={{ fontSize: 10, color: 'var(--muted)', marginBottom: 4, fontFamily: 'var(--mono)' }}>Macro sensitivity over time</div>
               <div style={{ display: 'flex', alignItems: 'flex-end', gap: 1, height: 40 }}>
                 {data.abs_avg.slice(-120).map((v, i) => {
+                  // Color based on where this value sits relative to the dataset
                   const fg = v > 0.25 ? '#00D64A' : v > 0.15 ? '#E1C87E' : '#555';
-                  return <div key={i} style={{ flex: 1, minWidth: 1, height: Math.max(2, v * 160) + '%', background: fg + '90', borderRadius: '1px 1px 0 0' }} />;
+                  const h = Math.max(2, Math.min(100, v * 250));
+                  return <div key={i} style={{ flex: 1, minWidth: 1, height: h + '%', background: fg + '90', borderRadius: '1px 1px 0 0' }} />;
                 })}
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 2 }}>
