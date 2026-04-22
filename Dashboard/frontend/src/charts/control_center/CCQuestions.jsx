@@ -5,11 +5,7 @@ import ChartPanel from '../../components/ChartPanel';
 function CorrelationBar({ value, label, detail, chartKey, onNav }) {
   if (value == null) return null;
   const abs = Math.abs(value);
-  const pct = Math.min(100, abs * 200); // 0.5 corr = full bar
 
-  // Green = high absolute correlation (macro driving)
-  // White/grey = low correlation (independent)
-  // Direction shown by +/-
   let fg, tag;
   if (abs > 0.3) {
     fg = '#00D64A';
@@ -21,6 +17,11 @@ function CorrelationBar({ value, label, detail, chartKey, onNav }) {
     fg = '#555';
     tag = 'INACTIVE';
   }
+
+  // Bar width: 0 = no bar, 0.5 = half, 1.0 = full side
+  const barWidth = Math.min(50, abs * 100); // 0.5 corr = full half
+  const isPositive = value >= 0;
+  const barColor = isPositive ? '#00D64A' : '#EC5B5B';
 
   return (
     <div style={{ padding: '10px 0', borderBottom: '0.5px solid rgba(128,128,128,0.06)' }}>
@@ -36,12 +37,33 @@ function CorrelationBar({ value, label, detail, chartKey, onNav }) {
           fontSize: 10, fontWeight: 600, padding: '2px 8px', borderRadius: 4,
           background: fg + '18', color: fg, minWidth: 55, textAlign: 'center',
         }}>{tag}</div>
-        <div style={{ fontFamily: 'var(--mono)', fontSize: 14, fontWeight: 700, color: fg, minWidth: 55, textAlign: 'right' }}>
+        <div style={{ fontFamily: 'var(--mono)', fontSize: 14, fontWeight: 700, color: barColor, minWidth: 55, textAlign: 'right' }}>
           {value > 0 ? '+' : ''}{value.toFixed(2)}
         </div>
       </div>
-      <div style={{ height: 10, background: 'var(--input-bg)', borderRadius: 3, overflow: 'hidden', marginLeft: 16 }}>
-        <div style={{ width: pct + '%', height: '100%', background: fg + '70', borderRadius: 3, transition: 'width 0.4s' }} />
+      {/* Centered diverging bar */}
+      <div style={{ position: 'relative', height: 12, background: 'var(--input-bg)', borderRadius: 3, overflow: 'hidden', marginLeft: 16 }}>
+        {/* Center line */}
+        <div style={{ position: 'absolute', left: '50%', top: 0, bottom: 0, width: 1, background: 'var(--border)', zIndex: 2 }} />
+        {/* Bar — extends left for negative, right for positive */}
+        {isPositive ? (
+          <div style={{
+            position: 'absolute', left: '50%', top: 0, height: '100%',
+            width: barWidth + '%',
+            background: barColor + '70', borderRadius: '0 3px 3px 0',
+            transition: 'width 0.4s',
+          }} />
+        ) : (
+          <div style={{
+            position: 'absolute', right: '50%', top: 0, height: '100%',
+            width: barWidth + '%',
+            background: barColor + '70', borderRadius: '3px 0 0 3px',
+            transition: 'width 0.4s',
+          }} />
+        )}
+        {/* Scale labels */}
+        <span style={{ position: 'absolute', left: 4, top: -1, fontSize: 8, color: 'var(--muted)', opacity: 0.5 }}>-1</span>
+        <span style={{ position: 'absolute', right: 4, top: -1, fontSize: 8, color: 'var(--muted)', opacity: 0.5 }}>+1</span>
       </div>
       {detail && <div style={{ fontSize: 11, color: 'var(--muted)', marginTop: 4, marginLeft: 16 }}>{detail}</div>}
     </div>
