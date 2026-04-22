@@ -25,6 +25,7 @@ from api.altcoins import (handle_price, handle_alt_scatter,
                            handle_alt_altseason, handle_alt_beta, handle_alt_heatmap,
                            handle_alt_ath_drawdown, handle_alt_funding_heatmap,
                            handle_alt_drawdown_ts)
+from api.macro_sensitivity import handle_macro_sensitivity
 from api.macro    import (handle_macro_price, handle_macro_matrix, handle_macro_dxy_btc,
                            handle_macro_risk, handle_macro_real_yields, handle_macro_stablecoin,
                            handle_macro_igv_btc, handle_macro_sharpe, handle_macro_btc_corr)
@@ -154,6 +155,7 @@ class Handler(BaseHTTPRequestHandler):
             elif p == "/api/alt-rel-share":     self.send_json(handle_alt_relative_share(params))
             elif p == "/api/btc-alt-ratio":     self.send_json(handle_btc_alt_ratio(params))
             elif p == "/api/alt-intracorr":     self.send_json(handle_alt_intracorr(params))
+            elif p == "/api/macro-sensitivity": self.send_json(handle_macro_sensitivity(params))
             elif p == "/api/macro-sharpe":      self.send_json(handle_macro_sharpe(params))
             elif p == "/api/macro-btc-corr":    self.send_json(handle_macro_btc_corr(params))
             elif p == "/api/pm-markets":      self.send_json(handle_pm_markets(params))

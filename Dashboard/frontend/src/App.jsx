@@ -14,6 +14,7 @@ const MacroIgvBtc     = lazy(() => import('./charts/macro/MacroIgvBtc'));
 const MacroRisk       = lazy(() => import('./charts/macro/MacroRisk'));
 const MacroRealYields = lazy(() => import('./charts/macro/MacroRealYields'));
 const MacroStablecoin = lazy(() => import('./charts/macro/MacroStablecoin'));
+const MacroSensitivity = lazy(() => import('./charts/macro/MacroSensitivity'));
 
 // ── Bitcoin ──────────────────────────────────────────────────────────────────
 const BtcMa           = lazy(() => import('./charts/bitcoin/BtcMa'));
@@ -103,6 +104,7 @@ const CHART_COMPONENTS = {
   'mac-price': MacroPrice, 'mac-sharpe': MacroSharpe, 'mac-btc-corr': MacroBtcCorr,
   'mac-matrix': MacroMatrix, 'mac-dxy-btc': MacroDxyBtc, 'mac-igv-btc': MacroIgvBtc,
   'mac-risk': MacroRisk, 'mac-real-yields': MacroRealYields, 'mac-stablecoin': MacroStablecoin,
+  'mac-sensitivity': MacroSensitivity,
   // Bitcoin
   'btc-ma': BtcMa, 'btc-ma-gap': BtcMaGap, 'btc-200w-floor': Btc200wFloor,
   'btc-200d-dev': Btc200dDev, 'btc-pi-cycle': BtcPiCycle, 'btc-realvol': BtcRealvol,
@@ -140,7 +142,7 @@ const CHART_COMPONENTS = {
 };
 
 const WINDOW_CHARTS = new Set([
-  'mac-sharpe', 'mac-btc-corr', 'mac-matrix', 'mac-dxy-btc', 'mac-igv-btc',
+  'mac-sharpe', 'mac-btc-corr', 'mac-matrix', 'mac-dxy-btc', 'mac-igv-btc', 'mac-sensitivity',
   'btc-funding-delta', 'alt-altseason', 'alt-beta', 'alt-heatmap',
   'sec-intra', 'sec-vs', 'sec-mom', 'sec-zscore', 'sec-vol',
   'sec-xheatmap', 'sec-rrg', 'ana-bubble', 'sec-sharpe', 'etf-net-flows',

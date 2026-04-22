@@ -136,6 +136,7 @@ const TABS = {
     ]},
     { label: 'Risk Regime', charts: [
       { key: 'mac-risk', label: 'Risk-on / Risk-off', sub: 'Composite VIX + DXY + credit.', src: 'Yahoo Finance' },
+      { key: 'mac-sensitivity', label: 'Macro sensitivity', sub: 'Is crypto macro-driven? BTC correlation to DXY & 10Y, z-scored.', src: 'CoinGecko + Yahoo Finance' },
     ]},
     { label: 'Rates', charts: [
       { key: 'mac-real-yields', label: 'Real yields vs BTC', sub: '10Y yield vs BTC.', src: 'Yahoo Finance + CoinGecko' },
