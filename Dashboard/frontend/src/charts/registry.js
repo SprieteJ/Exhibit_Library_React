@@ -4,6 +4,9 @@ const TABS = {
       { key: 'cc-matrix', label: 'Signal matrix', sub: 'Flagged control center rules.' },
       { key: 'cc-regime', label: 'Regime panel', sub: 'Macro regime indicators.' },
     ]},
+    { label: 'Questions', charts: [
+      { key: 'cc-questions', label: 'Market questions', sub: 'Core questions scored 0-100.' },
+    ]},
   ]},
   bitcoin: { label: 'Bitcoin', groups: [
     { label: 'Moving Averages', charts: [
@@ -136,7 +139,6 @@ const TABS = {
     ]},
     { label: 'Risk Regime', charts: [
       { key: 'mac-risk', label: 'Risk-on / Risk-off', sub: 'Composite VIX + DXY + credit.', src: 'Yahoo Finance' },
-      { key: 'mac-sensitivity', label: 'Macro sensitivity', sub: 'Is crypto macro-driven? BTC correlation to DXY & 10Y, z-scored.', src: 'CoinGecko + Yahoo Finance' },
     ]},
     { label: 'Rates', charts: [
       { key: 'mac-real-yields', label: 'Real yields vs BTC', sub: '10Y yield vs BTC.', src: 'Yahoo Finance + CoinGecko' },

@@ -1,14 +1,13 @@
 """
-Macro sensitivity: is crypto macro-driven right now?
+api/macro_sensitivity.py — "Is macro driving the market?"
 
-For each factor (DXY, 10Y yield), compute:
-  1. Rolling N-day correlation of BTC log returns vs factor log returns
-  2. Z-score that correlation against its trailing 1-year distribution
+Computes hourly rolling correlation of BTC vs macro factors (DXY, 10Y yield),
+z-scores against available history, and returns a 0-100 composite score.
 
-The blended z-score = average of the two component z-scores.
-High positive z = unusually high positive correlation to macro (macro driving crypto up with risk-on)
-High negative z = unusually high negative correlation (macro driving crypto inversely)
-High |z| either way = macro is driving. Near zero = crypto is independent.
+Score interpretation:
+  0-30:  Crypto independent — macro factors not driving
+  30-60: Moderate — some macro influence
+  60-100: Macro-driven — crypto moving with macro factors
 """
 import math
 from datetime import datetime, timedelta
@@ -17,29 +16,26 @@ import psycopg2.extras
 
 
 def handle_macro_sensitivity(params):
-    date_from = params.get("from", ["2020-01-01"])[0]
-    date_to   = params.get("to",   ["2099-01-01"])[0]
-    window    = int(params.get("window", ["30"])[0])       # correlation window
-    z_trail   = int(params.get("z_trail", ["365"])[0])     # z-score lookback
-
-    # Need extra history: window for correlation warmup + z_trail for z-score warmup
-    try:
-        ext = (datetime.strptime(date_from, "%Y-%m-%d") - timedelta(days=window + z_trail + 30)).strftime("%Y-%m-%d")
-    except:
-        ext = "2015-01-01"
+    window_hours = int(params.get("window", ["168"])[0])  # default 7 days = 168 hours
 
     conn = get_conn()
-    cur  = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+    cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
 
-    # Fetch BTC daily prices
+    # Fetch all available hourly BTC
     cur.execute("""
-        SELECT timestamp::date as date, price_usd FROM price_daily
-        WHERE symbol = 'BTC' AND timestamp >= %s AND timestamp <= %s AND price_usd > 0
+        SELECT timestamp, price_usd FROM price_hourly
+        WHERE symbol = 'BTC' AND price_usd > 0
         ORDER BY timestamp
-    """, (ext, date_to))
-    btc_map = {str(r['date']): float(r['price_usd']) for r in cur.fetchall()}
+    """)
+    btc_rows = cur.fetchall()
+    btc_map = {}
+    for r in btc_rows:
+        # Round to hour
+        ts = r['timestamp'].replace(minute=0, second=0, microsecond=0)
+        key = ts.strftime('%Y-%m-%d %H:00')
+        btc_map[key] = float(r['price_usd'])
 
-    # Fetch macro factors
+    # Fetch macro factors hourly
     factors = {
         'DXY': 'DX-Y.NYB',
         '10Y': '^TNX',
@@ -47,79 +43,78 @@ def handle_macro_sensitivity(params):
     factor_maps = {}
     for label, ticker in factors.items():
         cur.execute("""
-            SELECT timestamp::date as date, close FROM macro_daily
-            WHERE ticker = %s AND timestamp >= %s AND timestamp <= %s AND close > 0
+            SELECT timestamp, close FROM macro_hourly
+            WHERE ticker = %s AND close > 0
             ORDER BY timestamp
-        """, (ticker, ext, date_to))
-        factor_maps[label] = {str(r['date']): float(r['close']) for r in cur.fetchall()}
+        """, (ticker,))
+        rows = cur.fetchall()
+        fmap = {}
+        for r in rows:
+            ts = r['timestamp'].replace(minute=0, second=0, microsecond=0)
+            key = ts.strftime('%Y-%m-%d %H:00')
+            fmap[key] = float(r['close'])
+        factor_maps[label] = fmap
 
     conn.close()
 
     if not btc_map:
-        return {"error": "no BTC data"}
+        return {"error": "no BTC hourly data"}
 
-    # Use BTC dates as master (crypto trades every day)
-    all_dates = sorted(btc_map.keys())
+    # Build common hourly timestamps (where BTC has data)
+    all_hours = sorted(btc_map.keys())
 
-    # Forward-fill macro factors across weekends/holidays
+    # Forward-fill macro factors (they don't trade every hour)
     for label in factor_maps:
         filled = {}
         last_val = None
-        for d in all_dates:
-            v = factor_maps[label].get(d)
+        for h in all_hours:
+            v = factor_maps[label].get(h)
             if v is not None:
                 last_val = v
             if last_val is not None:
-                filled[d] = last_val
+                filled[h] = last_val
         factor_maps[label] = filled
 
-    # Compute log returns for BTC
+    # Compute hourly returns
     btc_rets = {}
     prev = None
-    for d in all_dates:
-        p = btc_map.get(d)
+    for h in all_hours:
+        p = btc_map.get(h)
         if p and prev and prev > 0:
-            btc_rets[d] = math.log(p / prev)
+            btc_rets[h] = math.log(p / prev)
         prev = p if p else prev
 
-    # Compute log returns for each factor
-    # Note: for 10Y yield (^TNX), use first differences not log returns
-    # because yields can be near zero and log doesn't make sense
     factor_rets = {}
-    for label in factor_maps:
+    for label in factors:
         rets = {}
         prev = None
-        for d in all_dates:
-            v = factor_maps[label].get(d)
+        for h in all_hours:
+            v = factor_maps[label].get(h)
             if v is not None and prev is not None:
                 if label == '10Y':
-                    # First difference for yields (change in yield level)
-                    rets[d] = v - prev
+                    rets[h] = v - prev  # first difference for yields
                 else:
-                    # Log return for price-based (DXY)
                     if prev > 0:
-                        rets[d] = math.log(v / prev)
+                        rets[h] = math.log(v / prev)
             prev = v if v is not None else prev
         factor_rets[label] = rets
 
-    # Compute rolling correlation for each factor
-    def rolling_corr_series(rets_a, rets_b, dates, win):
-        """Returns list of (date, correlation) tuples."""
-        result = []
-        for i in range(len(dates)):
-            d = dates[i]
-            # Gather window of paired returns
-            start_idx = max(0, i - win + 1)
+    # Rolling correlation function
+    def compute_rolling_corr(rets_a, rets_b, hours, win):
+        results = []  # (hour_key, corr)
+        for i in range(len(hours)):
+            h = hours[i]
+            start = max(0, i - win + 1)
             pairs = []
-            for j in range(start_idx, i + 1):
-                dd = dates[j]
-                a = rets_a.get(dd)
-                b = rets_b.get(dd)
+            for j in range(start, i + 1):
+                hh = hours[j]
+                a = rets_a.get(hh)
+                b = rets_b.get(hh)
                 if a is not None and b is not None:
                     pairs.append((a, b))
 
-            if len(pairs) < win * 0.7:  # need at least 70% of window
-                result.append((d, None))
+            if len(pairs) < win * 0.5:
+                results.append((h, None))
                 continue
 
             ax = [p[0] for p in pairs]
@@ -130,96 +125,104 @@ def handle_macro_sensitivity(params):
             num = sum((ax[k] - ma) * (bx[k] - mb) for k in range(n))
             da = math.sqrt(sum((a - ma)**2 for a in ax))
             db = math.sqrt(sum((b - mb)**2 for b in bx))
+            corr = (num / (da * db)) if (da > 0 and db > 0) else 0.0
+            results.append((h, round(corr, 4)))
+        return results
 
-            if da > 0 and db > 0:
-                corr = num / (da * db)
-            else:
-                corr = 0.0
-
-            result.append((d, round(corr, 4)))
-        return result
-
-    # Compute correlations
-    component_series = {}
+    # Compute correlations for each factor
+    component_corrs = {}
     for label in factors:
-        corr_series = rolling_corr_series(btc_rets, factor_rets[label], all_dates, window)
-        component_series[label] = corr_series
+        component_corrs[label] = compute_rolling_corr(btc_rets, factor_rets[label], all_hours, window_hours)
 
-    # Z-score each correlation against its trailing z_trail-day distribution
-    def zscore_series(corr_series, trail):
+    # Z-score each correlation against ALL available history
+    def zscore_series(corr_list):
+        vals = [c for _, c in corr_list if c is not None]
+        if len(vals) < 20:
+            return [(h, c, None) for h, c in corr_list]
+        mean = sum(vals) / len(vals)
+        std = math.sqrt(sum((v - mean)**2 for v in vals) / len(vals))
+        if std == 0:
+            return [(h, c, 0.0) for h, c in corr_list]
         result = []
-        corr_vals = [c for _, c in corr_series]
-        for i, (d, c) in enumerate(corr_series):
+        for h, c in corr_list:
             if c is None:
-                result.append((d, None, None))
-                continue
-            # Gather trailing window of correlation values
-            start = max(0, i - trail)
-            trailing = [corr_vals[j] for j in range(start, i) if corr_vals[j] is not None]
-            if len(trailing) < trail * 0.5:  # need at least 50% of lookback
-                result.append((d, c, None))
-                continue
-            mean = sum(trailing) / len(trailing)
-            std = math.sqrt(sum((v - mean)**2 for v in trailing) / len(trailing))
-            if std > 0:
-                z = (c - mean) / std
+                result.append((h, None, None))
             else:
-                z = 0.0
-            result.append((d, c, round(z, 4)))
+                z = round((c - mean) / std, 4)
+                result.append((h, c, z))
         return result
 
     components = {}
     for label in factors:
-        zs = zscore_series(component_series[label], z_trail)
-        components[label] = zs
+        components[label] = zscore_series(component_corrs[label])
 
-    # Trim to requested date range and build output
-    result_dates = []
-    result_components = {label: {'corr': [], 'zscore': []} for label in factors}
-    result_blend_z = []
-    result_blend_abs_z = []
+    # Build output — downsample to daily for the chart (take last hour of each day)
+    daily_buckets = {}
+    for i, h in enumerate(all_hours):
+        day = h[:10]  # YYYY-MM-DD
+        daily_buckets[day] = i  # last index for each day
 
-    for i, d in enumerate(all_dates):
-        if d < date_from:
-            continue
+    output_dates = []
+    output_components = {label: {'corr': [], 'zscore': []} for label in factors}
+    output_blend_abs_z = []
+    output_score = []
+
+    for day in sorted(daily_buckets.keys()):
+        idx = daily_buckets[day]
 
         all_z = []
-        all_abs_z = []
         skip = False
         for label in factors:
-            _, corr, z = components[label][i]
+            _, corr, z = components[label][idx]
             if z is None:
                 skip = True
                 break
             all_z.append(z)
-            all_abs_z.append(abs(z))
 
         if skip:
             continue
 
-        result_dates.append(d)
+        output_dates.append(day)
         for label in factors:
-            _, corr, z = components[label][i]
-            result_components[label]['corr'].append(corr)
-            result_components[label]['zscore'].append(z)
+            _, corr, z = components[label][idx]
+            output_components[label]['corr'].append(corr)
+            output_components[label]['zscore'].append(z)
 
-        # Blended z-score: average of component z-scores (preserves direction)
-        result_blend_z.append(round(sum(all_z) / len(all_z), 4))
-        # Absolute blend: average of |z| (measures magnitude regardless of direction)
-        result_blend_abs_z.append(round(sum(all_abs_z) / len(all_abs_z), 4))
+        # Absolute blend z
+        abs_z = sum(abs(z) for z in all_z) / len(all_z)
+        output_blend_abs_z.append(round(abs_z, 4))
+
+        # Convert |z| to 0-100 score using sigmoid-like mapping
+        # |z| of 0 → score ~15 (baseline noise)
+        # |z| of 1 → score ~50
+        # |z| of 2 → score ~80
+        # |z| of 3+ → score ~95
+        score = round(100 * (1 - math.exp(-0.7 * abs_z)), 1)
+        output_score.append(score)
+
+    # Current values for summary
+    current = {}
+    if output_dates:
+        current['score'] = output_score[-1]
+        current['abs_z'] = output_blend_abs_z[-1]
+        for label in factors:
+            current[label] = {
+                'corr': output_components[label]['corr'][-1],
+                'zscore': output_components[label]['zscore'][-1],
+            }
 
     return {
-        "dates": result_dates,
+        "dates": output_dates,
+        "score": output_score,
+        "blend_abs_zscore": output_blend_abs_z,
         "components": {
             label: {
                 "label": "US Dollar (DXY)" if label == "DXY" else "10Y Treasury Yield",
-                "corr": result_components[label]['corr'],
-                "zscore": result_components[label]['zscore'],
+                "corr": output_components[label]['corr'],
+                "zscore": output_components[label]['zscore'],
             }
             for label in factors
         },
-        "blend_zscore": result_blend_z,
-        "blend_abs_zscore": result_blend_abs_z,
-        "window": window,
-        "z_trail": z_trail,
+        "current": current,
+        "window_hours": window_hours,
     }

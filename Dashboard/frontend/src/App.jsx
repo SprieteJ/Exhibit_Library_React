@@ -14,7 +14,6 @@ const MacroIgvBtc     = lazy(() => import('./charts/macro/MacroIgvBtc'));
 const MacroRisk       = lazy(() => import('./charts/macro/MacroRisk'));
 const MacroRealYields = lazy(() => import('./charts/macro/MacroRealYields'));
 const MacroStablecoin = lazy(() => import('./charts/macro/MacroStablecoin'));
-const MacroSensitivity = lazy(() => import('./charts/macro/MacroSensitivity'));
 
 // ── Bitcoin ──────────────────────────────────────────────────────────────────
 const BtcMa           = lazy(() => import('./charts/bitcoin/BtcMa'));
@@ -87,6 +86,7 @@ const CmTotalMcap   = lazy(() => import('./charts/crypto_market/CmTotalMcap'));
 // ── Control Center ───────────────────────────────────────────────────────────
 const CCMatrix      = lazy(() => import('./charts/control_center/CCMatrix'));
 const CCRegime      = lazy(() => import('./charts/control_center/CCRegime'));
+const CCQuestions   = lazy(() => import('./charts/control_center/CCQuestions'));
 
 // ── ETF ──────────────────────────────────────────────────────────────────────
 const EtfNetFlows   = lazy(() => import('./charts/etf/EtfNetFlows'));
@@ -104,7 +104,6 @@ const CHART_COMPONENTS = {
   'mac-price': MacroPrice, 'mac-sharpe': MacroSharpe, 'mac-btc-corr': MacroBtcCorr,
   'mac-matrix': MacroMatrix, 'mac-dxy-btc': MacroDxyBtc, 'mac-igv-btc': MacroIgvBtc,
   'mac-risk': MacroRisk, 'mac-real-yields': MacroRealYields, 'mac-stablecoin': MacroStablecoin,
-  'mac-sensitivity': MacroSensitivity,
   // Bitcoin
   'btc-ma': BtcMa, 'btc-ma-gap': BtcMaGap, 'btc-200w-floor': Btc200wFloor,
   'btc-200d-dev': Btc200dDev, 'btc-pi-cycle': BtcPiCycle, 'btc-realvol': BtcRealvol,
@@ -134,6 +133,7 @@ const CHART_COMPONENTS = {
   // Control Center
   'cc-matrix': CCMatrix,
   'cc-regime': CCRegime,
+  'cc-questions': CCQuestions,
   // ETF
   'etf-net-flows': EtfNetFlows, 'etf-daily-bar': EtfDailyBar,
   'etf-weekly-bar': EtfWeeklyBar, 'etf-total-aum': EtfTotalAum,
@@ -142,7 +142,7 @@ const CHART_COMPONENTS = {
 };
 
 const WINDOW_CHARTS = new Set([
-  'mac-sharpe', 'mac-btc-corr', 'mac-matrix', 'mac-dxy-btc', 'mac-igv-btc', 'mac-sensitivity',
+  'mac-sharpe', 'mac-btc-corr', 'mac-matrix', 'mac-dxy-btc', 'mac-igv-btc',
   'btc-funding-delta', 'alt-altseason', 'alt-beta', 'alt-heatmap',
   'sec-intra', 'sec-vs', 'sec-mom', 'sec-zscore', 'sec-vol',
   'sec-xheatmap', 'sec-rrg', 'ana-bubble', 'sec-sharpe', 'etf-net-flows',
