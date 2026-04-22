@@ -141,7 +141,7 @@ const TABS = {
       { key: 'mac-risk', label: 'Risk-on / Risk-off', sub: 'Composite VIX + DXY + credit.', src: 'Yahoo Finance' },
     ]},
     { label: 'Macro Sensitivity', charts: [
-      { key: 'mac-sensitivity', label: 'Macro sensitivity (combined)', sub: 'Average absolute 30d correlation of BTC vs DXY, VIX, SPY.', src: 'CoinGecko + Yahoo Finance' },
+      { key: 'mac-sensitivity', label: 'Is macro driving crypto? (historical)', sub: 'Historical percentile of macro sensitivity score.', src: 'CoinGecko + Yahoo Finance' },
       { key: 'mac-btc-dxy-corr', label: 'BTC vs DXY correlation', sub: '30d rolling correlation of BTC vs US Dollar.', src: 'CoinGecko + Yahoo Finance' },
       { key: 'mac-btc-vix-corr', label: 'BTC vs VIX correlation', sub: '30d rolling correlation of BTC vs volatility index.', src: 'CoinGecko + Yahoo Finance' },
       { key: 'mac-btc-spy-corr', label: 'BTC vs SPY correlation', sub: '30d rolling correlation of BTC vs S&P 500.', src: 'CoinGecko + Yahoo Finance' },

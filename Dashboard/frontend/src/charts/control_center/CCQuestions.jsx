@@ -2,7 +2,7 @@ import { useState } from 'react';
 import useChartData from '../../hooks/useChartData';
 import ChartPanel from '../../components/ChartPanel';
 
-function CorrelationBar({ value, label, detail }) {
+function CorrelationBar({ value, label, detail, chartKey, onNav }) {
   if (value == null) return null;
   const abs = Math.abs(value);
   const pct = Math.min(100, abs * 200); // 0.5 corr = full bar
@@ -26,7 +26,12 @@ function CorrelationBar({ value, label, detail }) {
     <div style={{ padding: '10px 0', borderBottom: '0.5px solid rgba(128,128,128,0.06)' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
         <div style={{ width: 8, height: 8, borderRadius: '50%', background: fg, flexShrink: 0 }} />
-        <div style={{ fontSize: 13, color: 'var(--graphite)', flex: 1 }}>{label}</div>
+        <div style={{ fontSize: 13, color: 'var(--graphite)', flex: 1 }}>
+          {label}
+          {chartKey && onNav && (
+            <span onClick={() => onNav(chartKey)} style={{ fontSize: 11, color: 'var(--muted)', marginLeft: 6, cursor: 'pointer' }}>&#8594; chart</span>
+          )}
+        </div>
         <div style={{
           fontSize: 10, fontWeight: 600, padding: '2px 8px', borderRadius: 4,
           background: fg + '18', color: fg, minWidth: 55, textAlign: 'center',
@@ -155,16 +160,22 @@ export default function CCQuestions({ onNavigate }) {
               label="BTC vs US Dollar (DXY)"
               value={c.DXY?.corr}
               detail="Negative = BTC rises when dollar weakens (risk-on liquidity). Positive = BTC follows dollar strength. Near zero = BTC ignoring the dollar."
+              chartKey="mac-btc-dxy-corr"
+              onNav={goTo}
             />
             <CorrelationBar
               label="BTC vs Volatility (VIX)"
               value={c.VIX?.corr}
               detail="Negative = BTC sells when fear spikes (trading as risk asset). Positive = BTC rallies on fear (trading as a hedge). Near zero = BTC ignoring volatility."
+              chartKey="mac-btc-vix-corr"
+              onNav={goTo}
             />
             <CorrelationBar
               label="BTC vs Equities (SPY)"
               value={c.SPY?.corr}
               detail="Positive = BTC moving in lockstep with stocks (risk-on/risk-off). Negative = BTC diverging from equities. Near zero = BTC decoupled from equity markets."
+              chartKey="mac-btc-spy-corr"
+              onNav={goTo}
             />
           </div>
 
