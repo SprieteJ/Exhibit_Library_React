@@ -101,6 +101,9 @@ const EtfWeeklyBar  = lazy(() => import('./charts/etf/EtfWeeklyBar'));
 const EtfTotalAum   = lazy(() => import('./charts/etf/EtfTotalAum'));
 
 // ── Predictions ──────────────────────────────────────────────────────────────
+const PmDiscovery   = lazy(() => import('./charts/predictions/PmDiscovery'));
+const PmMovers      = lazy(() => import('./charts/predictions/PmMovers'));
+const PmWatchlist   = lazy(() => import('./charts/predictions/PmWatchlist'));
 
 const CHART_COMPONENTS = {
   // Macro
@@ -141,6 +144,8 @@ const CHART_COMPONENTS = {
   // ETF
   'etf-net-flows': EtfNetFlows, 'etf-daily-bar': EtfDailyBar,
   'etf-weekly-bar': EtfWeeklyBar, 'etf-total-aum': EtfTotalAum,
+  // Predictions
+  'pm-discovery': PmDiscovery, 'pm-movers': PmMovers, 'pm-watchlist': PmWatchlist,
 };
 
 const WINDOW_CHARTS = new Set([
@@ -193,17 +198,7 @@ export default function App() {
   return (
     <>
       <header className="header">
-        <svg viewBox="0 0 220 40" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ height: 28, width: 'auto', flexShrink: 0 }}>
-          <g stroke="var(--logo-color)" strokeWidth="1.4" strokeLinejoin="round" strokeLinecap="round" fill="none">
-            <polygon points="20,2 36,14 20,38 4,14" />
-            <line x1="4" y1="14" x2="20" y2="20" /><line x1="36" y1="14" x2="20" y2="20" />
-            <line x1="20" y1="2" x2="20" y2="20" /><line x1="20" y1="20" x2="20" y2="38" />
-            <line x1="4" y1="14" x2="36" y2="14" />
-            <line x1="4" y1="14" x2="12" y2="26" /><line x1="20" y1="20" x2="12" y2="26" />
-            <line x1="36" y1="14" x2="28" y2="26" /><line x1="20" y1="20" x2="28" y2="26" />
-          </g>
-          <text x="48" y="28" fontFamily="DM Sans, Helvetica Neue, sans-serif" fontSize="18" fontWeight="600" letterSpacing="3" fill="var(--logo-color)">WINTERMUTE</text>
-        </svg>
+        <img src="/static/logo.svg" alt="Wintermute" style={{ height: 24, width: 'auto', flexShrink: 0 }} />
         <div className="header-divider" />
         <span style={{ fontSize: 13, color: 'var(--muted)' }}>
           {TABS[activeTab]?.label}{activeChart ? ` / ${activeChart}` : ''}
