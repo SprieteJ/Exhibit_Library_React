@@ -199,3 +199,31 @@ def macro_crypto_comparison(cur, macro_ticker, crypto_symbol, date_from, date_to
             out_corr.append(corr[i] if i < len(corr) else None)
 
     return out_dates, out_macro, out_crypto, out_corr
+
+
+# ── Precomputed sector index (fast path) ──────────────────────────────────────
+def fetch_sector_index_precomputed(cur, sector_name, date_from, date_to):
+    """Read precomputed EW index from sector_index_daily. Returns (index_dict, dates) or (None, None)."""
+    try:
+        cur.execute("""
+            SELECT timestamp::date as date, ew_value
+            FROM sector_index_daily
+            WHERE sector = %s AND timestamp >= %s AND timestamp <= %s
+            ORDER BY timestamp
+        """, (sector_name, date_from, date_to))
+        rows = cur.fetchall()
+        if not rows or len(rows) < 2:
+            return None, None
+        first = float(rows[0][1 if not hasattr(rows[0], '__getitem__') else 'ew_value'])
+        if first <= 0:
+            return None, None
+        index = {}
+        dates = []
+        for r in rows:
+            d = str(r[0 if not hasattr(r, '__getitem__') else 'date'])
+            v = float(r[1 if not hasattr(r, '__getitem__') else 'ew_value'])
+            dates.append(d)
+            index[d] = round(v / first * 100, 4)
+        return index, dates
+    except Exception as e:
+        return None, None

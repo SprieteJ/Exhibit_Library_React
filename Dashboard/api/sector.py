@@ -5,7 +5,7 @@ import math
 from datetime import datetime, timedelta
 from collections import defaultdict
 from api.shared import (get_conn, SECTORS, SECTOR_COLORS,
-                     rebase_series, rolling_corr, fetch_sector_index,
+                     rebase_series, rolling_corr, fetch_sector_index, fetch_sector_index_precomputed,
                      price_table, ts_cast)
 import psycopg2.extras
 
@@ -29,7 +29,12 @@ def handle_sector_price(params, weighting='equal'):
 
     for sector in sectors:
         if sector not in SECTORS: continue
-        index, dates = fetch_sector_index(cur, SECTORS[sector], date_from, date_to, weighting, granularity)
+        # Try precomputed table first (much faster) for equal weighting
+        index, dates = None, None
+        if weighting == 'equal' and granularity == 'daily':
+            index, dates = fetch_sector_index_precomputed(cur, sector, date_from, date_to)
+        if not dates:
+            index, dates = fetch_sector_index(cur, SECTORS[sector], date_from, date_to, weighting, granularity)
         if dates:
             result[sector] = {
                 "dates":   dates,
