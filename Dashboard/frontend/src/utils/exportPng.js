@@ -88,6 +88,11 @@ export default function exportPng(chart, opts = {}) {
   chart.resize(chartW, chartH);
   chart.update('none');
 
+  // Render drawing annotations onto the chart canvas at export dimensions
+  if (opts.drawState?.annotations?.length && opts.renderAnnotations) {
+    opts.renderAnnotations(chart, opts.drawState, chart.ctx);
+  }
+
   // ── Compose export canvas ──
   const off = document.createElement('canvas');
   off.width = W; off.height = H;
@@ -101,7 +106,7 @@ export default function exportPng(chart, opts = {}) {
   ctx.strokeStyle = EXP_FRAME; ctx.lineWidth = 1.5;
   ctx.strokeRect(fx, fy, fw, fh);
 
-  // Chart
+  // Chart (now includes annotations)
   ctx.drawImage(chart.canvas, fx + CHART_PAD, fy + CHART_PAD, chartW, chartH);
 
   // Branded decorations

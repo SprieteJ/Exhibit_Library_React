@@ -14,9 +14,7 @@ const CDEFAULT = {
 };
 
 const _logoImg = new Image();
-_logoImg.width = 960;
-_logoImg.height = 108;
-_logoImg.src = '/static/logo.svg';
+_logoImg.src = '/static/logo.png';
 
 export default function ChartPanel({ title, source, loading, error, chartType, chartData, chartOptions, summary, children }) {
   const canvasRef = useRef(null);
@@ -101,12 +99,12 @@ export default function ChartPanel({ title, source, loading, error, chartType, c
 
   const handleExport = useCallback((mode) => {
     if (!chartRef.current) return;
-    // Composite overlay onto chart canvas before export
-    if (overlayRef.current && drawState.annotations.length) {
-      compositeOverlay(chartRef.current.canvas, overlayRef.current);
-    }
     const slug = (title || 'chart').toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '');
-    exportPng(chartRef.current, { title: title || '', filename: slug, mode, logoImg: _logoImg });
+    exportPng(chartRef.current, {
+      title: title || '', filename: slug, mode, logoImg: _logoImg,
+      drawState: drawState,
+      renderAnnotations: renderAnnotations,
+    });
     // Re-render overlay after export restores the chart
     if (overlayRef.current && chartRef.current) {
       syncOverlaySize();
