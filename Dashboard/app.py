@@ -35,9 +35,6 @@ from api.crypto_market import handle_total_mcap
 from api.control_center import handle_control_center, handle_rule_history
 from api.ethereum import (handle_eth_ma, handle_eth_ma_gap, handle_eth_200d_dev,
                            handle_eth_drawdown, handle_eth_mcap, handle_eth_btc_ratio)
-from api.predictions import (handle_pm_markets, handle_pm_movers, handle_pm_history,
-                              handle_pm_watchlist, handle_pm_watchlist_add, handle_pm_watchlist_remove,
-                              handle_pm_categories)
 from api.alt_market import (handle_alt_mcap, handle_alt_mcap_gap, handle_alt_mcap_dev,
                              handle_dominance_shares, handle_alt_relative_share,
                              handle_btc_alt_ratio, handle_alt_intracorr)
@@ -162,13 +159,6 @@ class Handler(BaseHTTPRequestHandler):
             elif p == "/api/macro-sensitivity": self.send_json(handle_macro_sensitivity(params))
             elif p == "/api/macro-sharpe":      self.send_json(handle_macro_sharpe(params))
             elif p == "/api/macro-btc-corr":    self.send_json(handle_macro_btc_corr(params))
-            elif p == "/api/pm-markets":      self.send_json(handle_pm_markets(params))
-            elif p == "/api/pm-movers":       self.send_json(handle_pm_movers(params))
-            elif p == "/api/pm-history":      self.send_json(handle_pm_history(params))
-            elif p == "/api/pm-watchlist":    self.send_json(handle_pm_watchlist(params))
-            elif p == "/api/pm-watchlist-add": self.send_json(handle_pm_watchlist_add(params))
-            elif p == "/api/pm-watchlist-remove": self.send_json(handle_pm_watchlist_remove(params))
-            elif p == "/api/pm-categories":   self.send_json(handle_pm_categories(params))
             elif p == "/api/rule-history":       self.send_json(handle_rule_history(params))
 
             # ── Static files from React build ─────────────────────────────

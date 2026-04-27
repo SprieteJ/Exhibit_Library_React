@@ -101,9 +101,6 @@ const EtfWeeklyBar  = lazy(() => import('./charts/etf/EtfWeeklyBar'));
 const EtfTotalAum   = lazy(() => import('./charts/etf/EtfTotalAum'));
 
 // ── Predictions ──────────────────────────────────────────────────────────────
-const PmDiscovery   = lazy(() => import('./charts/predictions/PmDiscovery'));
-const PmMovers      = lazy(() => import('./charts/predictions/PmMovers'));
-const PmWatchlist   = lazy(() => import('./charts/predictions/PmWatchlist'));
 
 const CHART_COMPONENTS = {
   // Macro
@@ -144,8 +141,6 @@ const CHART_COMPONENTS = {
   // ETF
   'etf-net-flows': EtfNetFlows, 'etf-daily-bar': EtfDailyBar,
   'etf-weekly-bar': EtfWeeklyBar, 'etf-total-aum': EtfTotalAum,
-  // Predictions
-  'pm-discovery': PmDiscovery, 'pm-movers': PmMovers, 'pm-watchlist': PmWatchlist,
 };
 
 const WINDOW_CHARTS = new Set([

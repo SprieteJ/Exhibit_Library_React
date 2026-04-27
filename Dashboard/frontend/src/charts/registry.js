@@ -166,15 +166,7 @@ const TABS = {
       { key: 'etf-total-aum', label: 'Total AuM', sub: 'Cumulative AuM for BTC and ETH spot ETFs.', src: 'Farside Investors' },
     ]},
   ]},
-  predictions: { label: 'Predictions', groups: [
-    { label: 'Live Markets', charts: [
-      { key: 'pm-discovery', label: 'Discovery', sub: 'All active markets by category and volume.' },
-      { key: 'pm-movers', label: '24h Movers', sub: 'Biggest probability shifts in the last 24 hours.' },
-    ]},
-    { label: 'Personal', charts: [
-      { key: 'pm-watchlist', label: 'Watchlist', sub: 'Your saved markets with live probabilities.' },
-    ]},
-  ]},
+
   data: { label: 'Data', groups: [
     { label: 'Database', charts: [
       { key: 'data-status', label: 'Database status', sub: 'Row counts and freshness.', src: 'Internal' },
