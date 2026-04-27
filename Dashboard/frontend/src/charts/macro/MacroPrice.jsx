@@ -47,7 +47,7 @@ export default function MacroPrice({ from, to }) {
       chartType="line" chartData={chartData}
       chartOptions={{
         scales: {
-          x: xAxisConfig(dates),
+          x: xAxisConfig(chartData?.labels || []),
           y: { ticks: { ...YTICK }, grid: YGRID },
         },
         plugins: { legend: { display: true, labels: { color: '#888', font: { size: 11 }, boxWidth: 12 } } },
