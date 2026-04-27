@@ -3,6 +3,7 @@ import TABS from './charts/registry';
 import Sidebar from './components/Sidebar';
 import RightPanel from './components/RightPanel';
 import Placeholder from './components/Placeholder';
+import TabLanding from './components/TabLanding';
 
 // ── Macro ────────────────────────────────────────────────────────────────────
 const MacroPrice      = lazy(() => import('./charts/macro/MacroPrice'));
@@ -160,7 +161,7 @@ export default function App() {
   const tabKeys = Object.keys(TABS);
   const [darkMode, setDarkMode] = useState(true);
   const [activeTab, setActiveTab] = useState('bitcoin');
-  const [activeChart, setActiveChart] = useState('btc-ma');
+  const [activeChart, setActiveChart] = useState(null); // null = show landing page
   const [from, setFrom] = useState('2013-01-01');
   const [to, setTo] = useState(todayStr());
   const [win, setWin] = useState('30');
@@ -174,10 +175,14 @@ export default function App() {
 
   const handleTabChange = (tabKey) => {
     setActiveTab(tabKey);
-    const tab = TABS[tabKey];
-    if (tab?.groups?.length && tab.groups[0].charts?.length) {
-      setActiveChart(tab.groups[0].charts[0].key);
-    }
+    setActiveChart(null); // Show landing page
+  };
+
+  const handleChartSelect = (chartKey) => {
+    setActiveChart(chartKey);
+    // Also switch tab if needed
+    const tab = Object.entries(TABS).find(([, t]) => t.groups?.some(g => g.charts?.some(c => c.key === chartKey)));
+    if (tab) setActiveTab(tab[0]);
   };
 
   const handleControlChange = (updates) => {
@@ -187,7 +192,8 @@ export default function App() {
     if (updates.activePreset !== undefined) setActivePreset(updates.activePreset);
   };
 
-  const ChartComponent = CHART_COMPONENTS[activeChart] || null;
+  const ChartComponent = activeChart ? (CHART_COMPONENTS[activeChart] || null) : null;
+  const showLanding = !activeChart;
 
   return (
     <>
@@ -204,7 +210,9 @@ export default function App() {
           <text x="48" y="28" fontFamily="DM Sans, Helvetica Neue, sans-serif" fontSize="18" fontWeight="600" letterSpacing="3" fill="var(--logo-color)">WINTERMUTE</text>
         </svg>
         <div className="header-divider" />
-        <span style={{ fontSize: 13, color: 'var(--muted)' }}>{TABS[activeTab]?.label} / {CHART_COMPONENTS[activeChart] ? activeChart : '...'}</span>
+        <span style={{ fontSize: 13, color: 'var(--muted)' }}>
+          {TABS[activeTab]?.label}{activeChart ? ` / ${activeChart}` : ''}
+        </span>
         <div className="header-spacer" />
         <span className="header-pill">v2.0 React</span>
         <button className="dark-toggle" onClick={toggleDark}>
@@ -224,15 +232,20 @@ export default function App() {
         ))}
       </nav>
 
-      <Sidebar activeTab={activeTab} activeChart={activeChart} onSelect={setActiveChart} />
+      <Sidebar activeTab={activeTab} activeChart={activeChart} onSelect={handleChartSelect} />
 
       <Suspense fallback={<div className="main"><div className="chart-area"><div className="spinner-wrap on"><div className="spinner" /></div></div></div>}>
-        {ChartComponent
-          ? <ChartComponent from={from} to={to} window={win} onNavigate={(key) => { setActiveChart(key); const tab = Object.entries(TABS).find(([,t]) => t.groups?.some(g => g.charts?.some(c => c.key === key))); if (tab) setActiveTab(tab[0]); }} />
-          : <Placeholder chartKey={activeChart} />}
+        {showLanding
+          ? <TabLanding tabKey={activeTab} onSelect={handleChartSelect} />
+          : ChartComponent
+            ? <ChartComponent from={from} to={to} window={win} onNavigate={handleChartSelect} />
+            : <Placeholder chartKey={activeChart} />
+        }
       </Suspense>
 
-      <RightPanel from={from} to={to} window={win} activePreset={activePreset} onChange={handleControlChange} showWindow={WINDOW_CHARTS.has(activeChart)} />
+      {!showLanding && (
+        <RightPanel from={from} to={to} window={win} activePreset={activePreset} onChange={handleControlChange} showWindow={WINDOW_CHARTS.has(activeChart)} />
+      )}
     </>
   );
 }
