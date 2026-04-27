@@ -19,14 +19,14 @@ def load_sectors():
 SECTORS = load_sectors()
 
 SECTOR_COLORS = {
-    "Memecoins":   "#F7931A",
-    "Layer 1":     "#2471CC",
-    "Layer 2":     "#746BE6",
-    "DeFi":        "#00D64A",
-    "DePIN":       "#DB33CB",
-    "Gaming":      "#EC5B5B",
-    "AI":          "#26A17B",
-    "Stablecoins": "#888B88",
+    "Currency Networks":                    "#F7931A",
+    "General Purpose Blockchain Networks":  "#2471CC",
+    "Decentralized Finance":                "#00D64A",
+    "Meme":                                 "#DB33CB",
+    "Media, Arts & Entertainment":          "#746BE6",
+    "Blockchain Utilities & Tools":         "#26A17B",
+    "Decentralized Physical Infrastructure":"#EC5B5B",
+    "Centralized Finance":                  "#E1C87E",
 }
 
 MAJORS        = ["BTC", "ETH"]
