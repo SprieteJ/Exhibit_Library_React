@@ -28,5 +28,5 @@ export default function EtfNetFlows({ from, to, window: win }) {
     });
   }
   return <ChartPanel title={`Spot ETF Net Flows (${data?.window || win || 7}d trailing)`} source="Source: Farside Investors" loading={loading} error={error} chartType="line" chartData={chartData}
-    chartOptions={{ scales: { x: xAxisConfig(dates), y: { ticks: { ...YTICK, callback: v => '$' + v.toFixed(0) + 'M' }, grid: YGRID } }, plugins: { legend: { display: true, labels: { color: '#888', font: { size: 11 }, boxWidth: 12 } } } }} summary={summary} />;
+    chartOptions={{ scales: { x: xAxisConfig(chartData?.labels || []), y: { ticks: { ...YTICK, callback: v => '$' + v.toFixed(0) + 'M' }, grid: YGRID } }, plugins: { legend: { display: true, labels: { color: '#888', font: { size: 11 }, boxWidth: 12 } } } }} summary={summary} />;
 }

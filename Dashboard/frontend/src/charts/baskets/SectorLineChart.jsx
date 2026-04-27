@@ -44,7 +44,7 @@ export default function SectorLineChart({ url, title, source, yFormat, yMin, yMa
       chartType="line" chartData={chartData}
       chartOptions={{
         scales: {
-          x: xAxisConfig(dates),
+          x: xAxisConfig(chartData?.labels || []),
           y: { ...(yMin != null ? { min: yMin } : {}), ...(yMax != null ? { max: yMax } : {}), ticks: { ...YTICK, callback: v => yFormat === '%' ? v.toFixed(0) + '%' : yFormat === 'corr' ? v.toFixed(1) : v.toFixed(0) }, grid: YGRID },
         },
         plugins: { legend: { display: true, labels: { color: '#888', font: { size: 10 }, boxWidth: 10 } } },

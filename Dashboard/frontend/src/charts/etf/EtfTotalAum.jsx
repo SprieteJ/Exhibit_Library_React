@@ -25,5 +25,5 @@ export default function EtfTotalAum({ from, to }) {
     });
   }
   return <ChartPanel title="Spot ETF Total AuM" source="Source: Farside Investors" loading={loading} error={error} chartType="line" chartData={chartData}
-    chartOptions={{ scales: { x: xAxisConfig(dates), y: { ticks: { ...YTICK, callback: v => '$' + v.toFixed(0) + 'B' }, grid: YGRID } }, plugins: { legend: { display: true, labels: { color: '#888', font: { size: 11 }, boxWidth: 12 } } } }} summary={summary} />;
+    chartOptions={{ scales: { x: xAxisConfig(chartData?.labels || []), y: { ticks: { ...YTICK, callback: v => '$' + v.toFixed(0) + 'B' }, grid: YGRID } }, plugins: { legend: { display: true, labels: { color: '#888', font: { size: 11 }, boxWidth: 12 } } } }} summary={summary} />;
 }
