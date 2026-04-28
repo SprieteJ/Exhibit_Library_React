@@ -19,6 +19,8 @@ const MiniChart = forwardRef(({ type, data, options, style }, ref) => {
 });
 
 export default function Btc200wCombined({ from, to }) {
+  const topRef = useRef(null);
+  const botRef = useRef(null);
   const floorUrl = `/api/btc-200w-floor?from=${from}&to=${to}`;
   const devUrl = `/api/btc-200d-dev?from=${from}&to=${to}`;
   const floor = useChartData(floorUrl);
@@ -59,18 +61,18 @@ export default function Btc200wCombined({ from, to }) {
   } : null;
 
   return (
-    <ChartPanel title="Moving Averages — 200w (2p)" source="Source: CoinGecko Pro · 1400d SMA as macro floor"
+    <ChartPanel miniChartRefs={[topRef, botRef]} title="Moving Averages — 200w (2p)" source="Source: CoinGecko Pro · 1400d SMA as macro floor"
       loading={loading} error={error} chartType="line" chartData={null} summary={summary}>
       <div style={{ display: 'flex', flexDirection: 'column', width: '100%', height: '100%', gap: 4 }}>
         <div style={{ flex: 3, position: 'relative', minHeight: 0 }}>
-          {topData && <MiniChart type="line" data={topData} options={{
+          {topData && <MiniChart ref={topRef} type="line" data={topData} options={{
             responsive: true, maintainAspectRatio: false,
             scales: { x: { ...xCfg, display: false }, y: { type: 'logarithmic', ticks: { ...YTICK, callback: v => '$' + fmtBig(v), maxTicksLimit: GRID_LINES }, grid: YGRID } },
             plugins: { legend: { display: true, labels: { color: '#888', font: { size: 10 }, boxWidth: 10 } }, tooltip: { enabled: true, mode: 'index', intersect: false } },
           }} style={{ width: '100%', height: '100%' }} />}
         </div>
         <div style={{ flex: 2, position: 'relative', minHeight: 0 }}>
-          {bottomData && <MiniChart type="bar" data={bottomData} options={{
+          {bottomData && <MiniChart ref={botRef} type="bar" data={bottomData} options={{
             responsive: true, maintainAspectRatio: false,
             scales: { x: xCfg, y: { ticks: { ...YTICK, callback: v => v.toFixed(0) + '%', maxTicksLimit: GRID_LINES }, grid: YGRID } },
             plugins: { legend: { display: false }, tooltip: { enabled: true, mode: 'index', intersect: false } },

@@ -1,6 +1,7 @@
 import { useRef, useEffect, useState, useCallback, useMemo } from 'react';
 import Chart from 'chart.js/auto';
 import exportPng from '../utils/exportPng';
+import exportCombinedPng from '../utils/exportCombinedPng';
 import { createDrawingState, attachDrawingHandlers, renderAnnotations, compositeOverlay } from '../utils/drawingPlugin';
 import { getMeta, setMeta, toggleFav } from '../utils/chartMeta';
 import { useChartContext } from '../utils/ChartContext';
@@ -21,7 +22,7 @@ _logoImg.width = 960;
 _logoImg.height = 108;
 _logoImg.src = '/static/logo.svg';
 
-export default function ChartPanel({ title, source, loading, error, chartType, chartData, chartOptions, summary, children }) {
+export default function ChartPanel({ title, source, loading, error, chartType, chartData, chartOptions, summary, children, miniChartRefs }) {
   const { chartKey, onMetaChange } = useChartContext();
   const canvasRef = useRef(null);
   const overlayRef = useRef(null);
@@ -112,8 +113,19 @@ export default function ChartPanel({ title, source, loading, error, chartType, c
   }, [dropOpen]);
 
   const handleExport = useCallback((mode) => {
-    if (!chartRef.current) return;
     const slug = (title || 'chart').toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '');
+    // Try combined export for 2-panel charts
+    if (miniChartRefs?.length >= 2) {
+      const topChart = miniChartRefs[0]?.current?.getChart?.();
+      const botChart = miniChartRefs[1]?.current?.getChart?.();
+      if (topChart && botChart) {
+        exportCombinedPng(topChart, botChart, { title: title || '', filename: slug, mode, logoImg: _logoImg });
+        setDropOpen(false);
+        return;
+      }
+    }
+    // Single chart export
+    if (!chartRef.current) return;
     exportPng(chartRef.current, {
       title: title || '', filename: slug, mode, logoImg: _logoImg,
       drawState: drawState,
@@ -124,7 +136,7 @@ export default function ChartPanel({ title, source, loading, error, chartType, c
       renderAnnotations(chartRef.current, drawState, overlayRef.current.getContext('2d'));
     }
     setDropOpen(false);
-  }, [title, drawState, syncOverlaySize]);
+  }, [title, drawState, syncOverlaySize, miniChartRefs]);
 
   const hasChart = !children && chartData;
   let cursor = '';
