@@ -112,7 +112,7 @@ export default function ChartPanel({ title, source, loading, error, chartType, c
   }, [dropOpen]);
 
   const handleExport = useCallback((mode) => {
-    console.log('EXPORT', { hasRef: !!chartRef.current, hasChildren: !!children, hasData: !!chartData }); if (!chartRef.current) return;
+    console.log('EXPORT', { hasRef: !!chartRef.current, hasChildren: !!children, childrenType: typeof children, childrenVal: children, hasData: !!chartData }); if (!chartRef.current) return;
     const slug = (title || 'chart').toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '');
     exportPng(chartRef.current, {
       title: title || '', filename: slug, mode, logoImg: _logoImg,
