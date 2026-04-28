@@ -1,15 +1,11 @@
 import { useRef, useEffect, useState, useCallback, useMemo } from 'react';
 import Chart from 'chart.js/auto';
 import exportPng from '../utils/exportPng';
-import { createDrawingState, attachDrawingHandlers, renderAnnotations, compositeOverlay, drawingPlugin } from '../utils/drawingPlugin';
+import { createDrawingState, attachDrawingHandlers, renderAnnotations, compositeOverlay } from '../utils/drawingPlugin';
 import { getMeta, setMeta, toggleFav } from '../utils/chartMeta';
 import { useChartContext } from '../utils/ChartContext';
 import DrawingToolbar from './DrawingToolbar';
 
-if (!Chart.registry.plugins.get('drawing')) {
-
-  Chart.register(drawingPlugin);
-}
 
 const CDEFAULT = {
   responsive: true, maintainAspectRatio: false, animation: { duration: 0 },
