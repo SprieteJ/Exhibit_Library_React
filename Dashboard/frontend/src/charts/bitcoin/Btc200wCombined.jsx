@@ -1,4 +1,4 @@
-import { useRef, forwardRef, useImperativeHandle } from 'react';
+import { useRef, useEffect, forwardRef, useImperativeHandle } from 'react';
 import useChartData from '../../hooks/useChartData';
 import ChartPanel from '../../components/ChartPanel';
 import { YTICK, YGRID, fmtBig, xAxisConfig } from '../constants';
@@ -10,11 +10,12 @@ const MiniChart = forwardRef(({ type, data, options, style }, ref) => {
   const canvasRef = useRef(null);
   const chartRef = useRef(null);
   useImperativeHandle(ref, () => ({ getChart: () => chartRef.current }));
-  if (chartRef.current) { chartRef.current.destroy(); chartRef.current = null; }
-  setTimeout(() => {
-    if (!canvasRef.current || chartRef.current) return;
+  useEffect(() => {
+    if (!canvasRef.current || !data) return;
+    if (chartRef.current) { chartRef.current.destroy(); chartRef.current = null; }
     chartRef.current = new Chart(canvasRef.current.getContext('2d'), { type, data, options: { ...options, animation: { duration: 0 } } });
-  }, 0);
+    return () => { if (chartRef.current) { chartRef.current.destroy(); chartRef.current = null; } };
+  }, [data, type, options]);
   return <canvas ref={canvasRef} style={style} />;
 });
 
