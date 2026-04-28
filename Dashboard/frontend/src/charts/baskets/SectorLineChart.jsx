@@ -18,7 +18,7 @@ export default function SectorLineChart({ url, title, source, yFormat, yMin, yMa
       const dates = [...allDates].sort();
       const datasets = sectors.map(([name, v], i) => {
         const dateMap = {};
-        v.dates.forEach((d, j) => dateMap[d] = v.rebased[j]);
+        v.dates.forEach((d, j) => dateMap[d] = v.rebased || v.values[j]);
         return {
           label: name, data: dates.map(d => dateMap[d] ?? null),
           borderColor: v.color || PAL[i % PAL.length], backgroundColor: 'transparent',
@@ -28,7 +28,7 @@ export default function SectorLineChart({ url, title, source, yFormat, yMin, yMa
       chartData = { labels: dates, datasets };
 
       summary = sectors.slice(0, 6).map(([name, v], i) => {
-        const last = v.rebased[v.rebased.length - 1];
+        const last = v.rebased || v.values[v.rebased || v.values.length - 1];
         return last != null ? (
           <div className="perf-item" key={name}>
             <span style={{ color: v.color || PAL[i % PAL.length], fontWeight: 600 }}>{name.length > 15 ? name.slice(0, 12) + '…' : name}</span>{' '}
