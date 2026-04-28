@@ -161,7 +161,7 @@ export default function ChartPanel({ title, source, loading, error, chartType, c
             </button>
           )}
           {/* Export button */}
-          {hasChart && (
+          {(
             <div className="export-wrap">
               <button className="export-btn" onClick={(e) => { e.stopPropagation(); setDropOpen(v => !v); }} title="Save as PNG">
                 <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
