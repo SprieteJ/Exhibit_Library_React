@@ -7,7 +7,7 @@ import { useChartContext } from '../utils/ChartContext';
 import DrawingToolbar from './DrawingToolbar';
 
 if (!Chart.registry.plugins.get('drawing')) {
-  const { drawingPlugin } = require('../utils/drawingPlugin');
+
   Chart.register(drawingPlugin);
 }
 
