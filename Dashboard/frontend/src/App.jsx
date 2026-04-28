@@ -4,6 +4,7 @@ import Sidebar from './components/Sidebar';
 import RightPanel from './components/RightPanel';
 import Placeholder from './components/Placeholder';
 import TabLanding from './components/TabLanding';
+import { ChartProvider } from './utils/ChartContext';
 
 // ── Macro ────────────────────────────────────────────────────────────────────
 const MacroPrice      = lazy(() => import('./charts/macro/MacroPrice'));
@@ -166,6 +167,7 @@ export default function App() {
   const [to, setTo] = useState(todayStr());
   const [win, setWin] = useState('30');
   const [activePreset, setActivePreset] = useState('ALL');
+  const [metaVersion, setMetaVersion] = useState(0);
 
   const toggleDark = () => {
     const next = !darkMode;
@@ -222,13 +224,15 @@ export default function App() {
         ))}
       </nav>
 
-      <Sidebar activeTab={activeTab} activeChart={activeChart} onSelect={handleChartSelect} />
+      <Sidebar activeTab={activeTab} activeChart={activeChart} onSelect={handleChartSelect} metaVersion={metaVersion} />
 
       <Suspense fallback={<div className="main"><div className="chart-area"><div className="spinner-wrap on"><div className="spinner" /></div></div></div>}>
         {showLanding
           ? <TabLanding tabKey={activeTab} onSelect={handleChartSelect} />
           : ChartComponent
-            ? <ChartComponent from={from} to={to} window={win} onNavigate={handleChartSelect} />
+            ? <ChartProvider chartKey={activeChart} onMetaChange={() => setMetaVersion(v => v + 1)}>
+                <ChartComponent from={from} to={to} window={win} onNavigate={handleChartSelect} />
+              </ChartProvider>
             : <Placeholder chartKey={activeChart} />
         }
       </Suspense>
