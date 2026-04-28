@@ -22,11 +22,6 @@ const MacroBtcVix = lazy(() => import('./charts/macro/MacroBtcVix'));
 const MacroBtcSpy = lazy(() => import('./charts/macro/MacroBtcSpy'));
 
 // ── Bitcoin ──────────────────────────────────────────────────────────────────
-const BtcMa           = lazy(() => import('./charts/bitcoin/BtcMa'));
-const BtcMaGap        = lazy(() => import('./charts/bitcoin/BtcMaGap'));
-const Btc200wFloor    = lazy(() => import('./charts/bitcoin/Btc200wFloor'));
-const Btc200dDev      = lazy(() => import('./charts/bitcoin/Btc200dDev'));
-const BtcPiCycle      = lazy(() => import('./charts/bitcoin/BtcPiCycle'));
 const BtcRealvol      = lazy(() => import('./charts/bitcoin/BtcRealvol'));
 const BtcRvIv         = lazy(() => import('./charts/bitcoin/BtcRvIv'));
 const BtcDrawdown     = lazy(() => import('./charts/bitcoin/BtcDrawdown'));
@@ -41,6 +36,10 @@ const BtcBull         = lazy(() => import('./charts/bitcoin/BtcBull'));
 const BtcGold         = lazy(() => import('./charts/bitcoin/BtcGold'));
 const BtcGoldRatio    = lazy(() => import('./charts/bitcoin/BtcGoldRatio'));
 const BtcSessionReturns = lazy(() => import('./charts/bitcoin/BtcSessionReturns'));
+const BtcMaCombined     = lazy(() => import('./charts/bitcoin/BtcMaCombined'));
+const Btc200wCombined   = lazy(() => import('./charts/bitcoin/Btc200wCombined'));
+const BtcPiCycleCombined = lazy(() => import('./charts/bitcoin/BtcPiCycleCombined'));
+const BtcPriceRsi       = lazy(() => import('./charts/bitcoin/BtcPriceRsi'));
 
 // ── Ethereum ─────────────────────────────────────────────────────────────────
 const EthMa           = lazy(() => import('./charts/ethereum/EthMa'));
@@ -113,8 +112,7 @@ const CHART_COMPONENTS = {
   'mac-risk': MacroRisk, 'mac-real-yields': MacroRealYields, 'mac-stablecoin': MacroStablecoin,
   'mac-sensitivity': MacroSensitivity, 'mac-btc-dxy-corr': MacroBtcDxy, 'mac-btc-vix-corr': MacroBtcVix, 'mac-btc-spy-corr': MacroBtcSpy,
   // Bitcoin
-  'btc-ma': BtcMa, 'btc-ma-gap': BtcMaGap, 'btc-200w-floor': Btc200wFloor,
-  'btc-200d-dev': Btc200dDev, 'btc-pi-cycle': BtcPiCycle, 'btc-realvol': BtcRealvol,
+  'btc-ma-combined': BtcMaCombined, 'btc-200w-combined': Btc200wCombined, 'btc-pi-combined': BtcPiCycleCombined, 'btc-price-rsi': BtcPriceRsi, 'btc-realvol': BtcRealvol,
   'btc-rv-iv': BtcRvIv, 'btc-drawdown': BtcDrawdown, 'btc-mcap': BtcMcap,
   'btc-dominance': BtcDominance, 'btc-funding': BtcFunding, 'btc-oi': BtcOi,
   'btc-funding-delta': BtcFundingDelta, 'btc-epochs': BtcEpochs, 'btc-cycles': BtcCycles,

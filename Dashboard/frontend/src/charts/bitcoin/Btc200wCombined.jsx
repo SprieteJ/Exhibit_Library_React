@@ -10,38 +10,34 @@ const MiniChart = forwardRef(({ type, data, options, style }, ref) => {
   const canvasRef = useRef(null);
   const chartRef = useRef(null);
   useImperativeHandle(ref, () => ({ getChart: () => chartRef.current }));
-
   if (chartRef.current) { chartRef.current.destroy(); chartRef.current = null; }
   setTimeout(() => {
     if (!canvasRef.current || chartRef.current) return;
     chartRef.current = new Chart(canvasRef.current.getContext('2d'), { type, data, options: { ...options, animation: { duration: 0 } } });
   }, 0);
-
   return <canvas ref={canvasRef} style={style} />;
 });
 
-export default function BtcMaCombined({ from, to }) {
-  const maUrl = `/api/btc-ma?from=${from}&to=${to}`;
-  const gapUrl = `/api/btc-ma-gap?from=${from}&to=${to}`;
-  const ma = useChartData(maUrl);
-  const gap = useChartData(gapUrl);
+export default function Btc200wCombined({ from, to }) {
+  const floorUrl = `/api/btc-200w-floor?from=${from}&to=${to}`;
+  const devUrl = `/api/btc-200d-dev?from=${from}&to=${to}`;
+  const floor = useChartData(floorUrl);
+  const dev = useChartData(devUrl);
 
-  const loading = ma.loading || gap.loading;
-  const error = ma.error || gap.error;
-  const dates = ma.data?.dates || [];
+  const loading = floor.loading || dev.loading;
+  const error = floor.error || dev.error;
+  const dates = floor.data?.dates || [];
 
   let summary = null;
-  if (ma.data?.price) {
-    const last = ma.data.price[ma.data.price.length - 1];
-    const last50 = ma.data.ma50?.filter(v => v != null).slice(-1)[0];
-    const last200 = ma.data.ma200?.filter(v => v != null).slice(-1)[0];
-    const lastGap = gap.data?.gap?.filter(v => v != null).slice(-1)[0];
+  if (floor.data?.price) {
+    const lastMa = floor.data.ma200w?.filter(v => v != null).slice(-1)[0];
+    const lastMult = floor.data.multiplier?.filter(v => v != null).slice(-1)[0];
+    const lastDev = dev.data?.deviation?.filter(v => v != null).slice(-1)[0];
     summary = (
       <>
-        <div className="perf-item"><span style={{ color: '#F7931A', fontWeight: 600 }}>BTC</span> ${fmtBig(last)}</div>
-        {last50 && <div className="perf-item"><span style={{ color: '#00D64A', fontWeight: 600 }}>50d</span> ${fmtBig(last50)}</div>}
-        {last200 && <div className="perf-item"><span style={{ color: '#EC5B5B', fontWeight: 600 }}>200d</span> ${fmtBig(last200)}</div>}
-        {lastGap != null && <div className="perf-item"><span style={{ color: lastGap >= 0 ? '#00D64A' : '#EC5B5B', fontWeight: 600 }}>Gap</span> {lastGap >= 0 ? '+' : ''}{lastGap.toFixed(1)}%</div>}
+        {lastMa && <div className="perf-item"><span style={{ color: '#EC5B5B', fontWeight: 600 }}>200w MA</span> ${fmtBig(lastMa)}</div>}
+        {lastMult && <div className="perf-item"><span style={{ color: '#F7931A', fontWeight: 600 }}>Multiple</span> {lastMult.toFixed(2)}x</div>}
+        {lastDev != null && <div className="perf-item"><span style={{ color: lastDev >= 0 ? '#00D64A' : '#EC5B5B', fontWeight: 600 }}>Deviation</span> {lastDev >= 0 ? '+' : ''}{lastDev.toFixed(1)}%</div>}
       </>
     );
   }
@@ -51,20 +47,19 @@ export default function BtcMaCombined({ from, to }) {
   const topData = dates.length ? {
     labels: dates,
     datasets: [
-      { label: 'BTC', data: ma.data.price, borderColor: '#F7931A', borderWidth: 1.6, pointRadius: 0, tension: 0.1, backgroundColor: 'transparent' },
-      { label: '50d MA', data: ma.data.ma50, borderColor: '#00D64A', borderWidth: 1, pointRadius: 0, tension: 0.1, borderDash: [4, 3], backgroundColor: 'transparent', spanGaps: true },
-      { label: '200d MA', data: ma.data.ma200, borderColor: '#EC5B5B', borderWidth: 1, pointRadius: 0, tension: 0.1, borderDash: [4, 3], backgroundColor: 'transparent', spanGaps: true },
+      { label: 'BTC', data: floor.data.price, borderColor: '#F7931A', borderWidth: 1.4, pointRadius: 0, tension: 0.1, backgroundColor: 'transparent' },
+      { label: '200w MA', data: floor.data.ma200w, borderColor: '#EC5B5B', borderWidth: 1.2, pointRadius: 0, tension: 0.1, borderDash: [4, 3], backgroundColor: 'transparent', spanGaps: true },
     ],
   } : null;
 
-  const gapColors = gap.data?.gap?.map(v => v != null && v >= 0 ? 'rgba(0,214,74,0.6)' : 'rgba(236,91,91,0.6)') || [];
-  const bottomData = gap.data?.dates?.length ? {
-    labels: gap.data.dates,
-    datasets: [{ label: 'MA Gap %', data: gap.data.gap, backgroundColor: gapColors, borderColor: gapColors, borderWidth: 0, pointRadius: 0, type: 'bar' }],
+  const devColors = dev.data?.deviation?.map(v => v != null && v >= 0 ? 'rgba(0,214,74,0.5)' : 'rgba(236,91,91,0.5)') || [];
+  const bottomData = dev.data?.dates?.length ? {
+    labels: dev.data.dates,
+    datasets: [{ label: 'Deviation %', data: dev.data.deviation, backgroundColor: devColors, borderColor: devColors, borderWidth: 0, pointRadius: 0, type: 'bar' }],
   } : null;
 
   return (
-    <ChartPanel title="Moving Averages — 50d & 200d (2p)" source="Source: CoinGecko Pro"
+    <ChartPanel title="Moving Averages — 200w (2p)" source="Source: CoinGecko Pro · 1400d SMA as macro floor"
       loading={loading} error={error} chartType="line" chartData={null} summary={summary}>
       <div style={{ display: 'flex', flexDirection: 'column', width: '100%', height: '100%', gap: 4 }}>
         <div style={{ flex: 3, position: 'relative', minHeight: 0 }}>

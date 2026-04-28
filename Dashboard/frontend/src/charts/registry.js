@@ -10,18 +10,19 @@ const TABS = {
   ]},
   bitcoin: { label: 'Bitcoin', groups: [
     { label: 'Moving Averages', charts: [
-      { key: 'btc-ma', label: 'Moving averages', sub: 'BTC with 50d, 100d, 200d MAs.', src: 'CoinGecko Pro' },
-      { key: 'btc-ma-gap', label: '50d / 200d MA gap', sub: 'Spread between 50d and 200d MA.', src: 'CoinGecko Pro' },
-      { key: 'btc-200w-floor', label: '200-week floor', sub: 'BTC vs 200-week MA.', src: 'CoinGecko Pro' },
-      { key: 'btc-200d-dev', label: '200d MA deviation', sub: 'Deviation from 200d MA.', src: 'CoinGecko Pro' },
-      { key: 'btc-pi-cycle', label: 'Pi Cycle', sub: '111d vs 2x 350d MA.', src: 'CoinGecko Pro' },
+      { key: 'btc-ma-combined', label: 'Moving averages — 50d & 200d (2p)', sub: 'Price with MAs + gap bar chart.', src: 'CoinGecko Pro' },
+      { key: 'btc-200w-combined', label: 'Moving averages — 200w (2p)', sub: '200-week floor + deviation.', src: 'CoinGecko Pro' },
+      { key: 'btc-pi-combined', label: 'Pi cycle (2p)', sub: '111d vs 2×350d MA + gap.', src: 'CoinGecko Pro' },
     ]},
     { label: 'Volatility', charts: [
       { key: 'btc-realvol', label: 'Realized volatility', sub: '30d, 90d, 180d rolling vol.', src: 'CoinGecko Pro' },
       { key: 'btc-rv-iv', label: 'IV vs RV', sub: 'DVOL vs 30d realized vol.', src: 'Deribit + CoinGecko' },
     ]},
+    { label: 'Price & RSI', charts: [
+      { key: 'btc-price-rsi', label: 'Price & RSI', sub: 'BTC colored by RSI direction + RSI bar chart.', src: 'CoinGecko Pro' },
+    ]},
     { label: 'Price Performance', charts: [
-      { key: 'btc-drawdown', label: 'Drawdown from ATH', sub: 'Rolling drawdown.', src: 'CoinGecko Pro' },
+      { key: 'btc-drawdown', label: 'Drawdown from ATH (1p)', sub: 'Rolling drawdown from all-time high.', src: 'CoinGecko Pro' },
     ]},
     { label: 'Market Cap', charts: [
       { key: 'btc-mcap', label: 'Market cap', sub: 'BTC mcap with milestones.', src: 'CoinGecko Pro' },
@@ -50,6 +51,9 @@ const TABS = {
       { key: 'eth-ma', label: 'Moving averages', sub: 'ETH with 50d, 100d, 200d MAs.', src: 'CoinGecko Pro' },
       { key: 'eth-ma-gap', label: '50d / 200d MA gap', sub: 'MA spread.', src: 'CoinGecko Pro' },
       { key: 'eth-200d-dev', label: '200d MA deviation', sub: 'Deviation from 200d MA.', src: 'CoinGecko Pro' },
+    ]},
+    { label: 'Price & RSI', charts: [
+      { key: 'btc-price-rsi', label: 'Price & RSI', sub: 'BTC colored by RSI direction + RSI bar chart.', src: 'CoinGecko Pro' },
     ]},
     { label: 'Price Performance', charts: [{ key: 'eth-drawdown', label: 'Drawdown from ATH', sub: 'Rolling drawdown.', src: 'CoinGecko Pro' }] },
     { label: 'Market Cap', charts: [{ key: 'eth-mcap', label: 'Market cap', sub: 'ETH mcap.', src: 'CoinGecko Pro' }] },

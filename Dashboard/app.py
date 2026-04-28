@@ -16,6 +16,7 @@ from api.sector   import (handle_sectors, handle_sector_price, handle_intra_corr
                            handle_sector_vol, handle_sector_drawdown, handle_sector_breadth,
                            handle_sector_funding, handle_sector_oi, handle_sector_sharpe)
 from api.btc_sessions import handle_btc_session_returns
+from api.btc_rsi import handle_btc_rsi
 from api.bitcoin  import (handle_btc_epochs, handle_btc_cycles, handle_btc_gold, handle_btc_rolling,
                            handle_btc_bull, handle_btc_realvol, handle_btc_drawdown_ath,
                            handle_btc_gold_ratio, handle_btc_dominance, handle_btc_funding, handle_btc_oi,
@@ -119,6 +120,7 @@ class Handler(BaseHTTPRequestHandler):
             elif p == "/api/btc-funding":       self.send_json(handle_btc_funding(params))
             elif p == "/api/btc-oi":            self.send_json(handle_btc_oi(params))
             elif p == "/api/btc-funding-delta": self.send_json(handle_btc_funding_delta(params))
+            elif p == "/api/btc-rsi": self.send_json(handle_btc_rsi(params))
             elif p == "/api/btc-session-returns": self.send_json(handle_btc_session_returns(params))
             elif p == "/api/btc-ma":            self.send_json(handle_btc_ma(params))
             elif p == "/api/btc-200w-floor":    self.send_json(handle_btc_200w_floor(params))
