@@ -86,7 +86,7 @@ export default function exportPng(chart, opts = {}) {
   chart.canvas.width = chartW;
   chart.canvas.height = chartH;
   chart.resize(chartW, chartH);
-  chart.update('none');
+  chart.update();
 
   // Render drawing annotations onto the chart canvas at export dimensions
   if (opts.drawState?.annotations?.length && opts.renderAnnotations) {
@@ -160,5 +160,5 @@ export default function exportPng(chart, opts = {}) {
   }
   chart.canvas.width = save.cw; chart.canvas.height = save.ch;
   chart.canvas.style.width = save.w; chart.canvas.style.height = save.h;
-  chart.resize(); chart.update('none');
+  chart.resize(); chart.update();
 }
